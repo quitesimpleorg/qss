@@ -8,5 +8,22 @@
 - PdfPreview: Files per file, or directory (so basically filter the 
 results)
 - PdfPreview: Remove arbitrary limit of 300 
+- Hide PdfPreview Tab if there are no pdfs in the results
 -Tagging: add an "addtag" utility, to assign tags to folder and files
 -gui: Search expclitly for tags, list by tags, remove tags, add tags
+-gui: Filter already found results. For example, "show only folders",
+or just search with those results.
+-split each tab into own class, not everything in mainwindow.cpp?
+Menu:
+-Delete from index
+-Delete from fs
+-Reindex
+Filter:
+contains: (default, implicit)
+type:d 
+type:file
+endswith:
+startswith:
+mtime:
+
+SearchWorker::setFilters()
