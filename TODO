@@ -1,0 +1,10 @@
+- when opening pdf, jump directly to page
+- ability to set the WHERE condition (allow editing the SQL query)
+- Scale factors
+- Abort running pdf preview generation when we search for something new
+- Index .ebup
+- Preview for: .txt, source code files, .ebup. 
+- Stats: Number of results found
+- PdfPreview: Files per file, or directory (so basically filter the 
+results)
+- PdfPreview: Remove arbitrary limit of 300 
