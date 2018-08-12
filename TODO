@@ -3,8 +3,10 @@
 - Scale factors
 - Abort running pdf preview generation when we search for something new
 - Index .ebup
-- Preview for: .txt, source code files, .ebup. 
+- Preview for: .txt, source code files, .ebup, images
 - Stats: Number of results found
 - PdfPreview: Files per file, or directory (so basically filter the 
 results)
 - PdfPreview: Remove arbitrary limit of 300 
+-Tagging: add an "addtag" utility, to assign tags to folder and files
+-gui: Search expclitly for tags, list by tags, remove tags, add tags
