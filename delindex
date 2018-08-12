@@ -1,6 +1,6 @@
 #!/bin/sh
 TEMPFILE=$(mktemp)
-DBFILE="$EASYINDEX_PATH"
+DBFILE="$QSS_PATH"
 function todelete()
 {
 	echo "DELETE FROM file WHERE path = '$1';" >> /"$TEMPFILE"
