@@ -19,32 +19,7 @@
      <widget class="QLineEdit" name="txtSearch"/>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QPushButton" name="pushButton_2">
-        <property name="text">
-         <string>Edit Content Query</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Edit File Query</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Filter results</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit"/>
-      </item>
-     </layout>
+     <layout class="QHBoxLayout" name="horizontalLayout_3"/>
     </item>
     <item>
      <widget class="QTabWidget" name="tabWidget">
@@ -52,7 +27,7 @@
        <enum>QTabWidget::South</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="resultsTab">
        <attribute name="title">
@@ -107,7 +82,7 @@
              <x>0</x>
              <y>0</y>
              <width>1179</width>
-             <height>397</height>
+             <height>420</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout"/>
@@ -126,7 +101,7 @@
           <item>
            <widget class="QComboBox" name="comboBox">
             <property name="currentText">
-             <string>100%</string>
+             <string>25%</string>
             </property>
             <item>
              <property name="text">
