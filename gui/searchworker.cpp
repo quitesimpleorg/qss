@@ -20,6 +20,13 @@ SearchWorker::SearchWorker(const QString &dbpath)
     queryContent->prepare("SELECT file.path, content.page, file.mtime FROM file INNER JOIN content ON file.id = content.fileid INNER JOIN content_fts ON content.id = content_fts.ROWID WHERE content_fts.content MATCH ? ORDER By file.mtime DESC, content.page ASC");
 }
 
+
+QString normalize(QString str)
+{
+    str = str.replace(" ", " AND ");
+    str = str.replace("|", " OR ");
+    return str;
+}
 void SearchWorker::searchForFile(const QString &query)
 {
     QVector<SearchResult> results;

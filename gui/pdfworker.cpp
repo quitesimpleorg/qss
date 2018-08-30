@@ -15,15 +15,25 @@ Poppler::Document * PdfWorker::document(QString path)
         return this->documentcache.value(path);
 
     Poppler::Document *result = Poppler::Document::load(path);
+    if(result == nullptr)
+    {
+        return nullptr;
+    }
     result->setRenderHint(Poppler::Document::TextAntialiasing);
     this->documentcache.insert(path, result);
     return result;
 }
 void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor)
 {
+    this->cancelCurrent = false;
+    this->generating = true;
     for(SearchResult &sr : paths)
     {
         Poppler::Document *doc = document(sr.path);
+        if(doc == nullptr)
+        {
+            continue;
+        }
         qDebug() << sr.path;
         if(doc->isLocked())
         {
@@ -39,6 +49,27 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
         preview.previewImage = image;
         preview.documentPath = sr.path;
         emit previewReady(preview);
+        if(this->cancelCurrent.load())
+        {
+
+            break;
+        }
     }
+    isFreeMutex.lock();
+    isFree.wakeOne();
+    isFreeMutex.unlock();
+    generating = false;
     emit previewsFinished();
+}
+
+void PdfWorker::cancelAndWait()
+{
+    if(this->generating.load())
+    {
+        this->cancelCurrent = true;
+
+        isFreeMutex.lock();
+        isFree.wait(&isFreeMutex);
+        isFreeMutex.unlock();
+    }
 }
