@@ -29,6 +29,10 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
     this->generating = true;
     for(SearchResult &sr : paths)
     {
+        if(this->cancelCurrent.load())
+        {
+            break;
+        }
         Poppler::Document *doc = document(sr.path);
         if(doc == nullptr)
         {
@@ -48,12 +52,8 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
         PdfPreview preview;
         preview.previewImage = image;
         preview.documentPath = sr.path;
+        preview.page = sr.page;
         emit previewReady(preview);
-        if(this->cancelCurrent.load())
-        {
-
-            break;
-        }
     }
     isFreeMutex.lock();
     isFree.wakeOne();

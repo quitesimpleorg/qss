@@ -7,6 +7,7 @@
 #include <QClipboard>
 #include <QSettings>
 #include <QDateTime>
+#include <QProcess>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "clicklabel.h"
@@ -61,7 +62,27 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
     ClickLabel *label = new ClickLabel();
     label->setPixmap(QPixmap::fromImage(preview.previewImage));
     ui->scrollAreaWidgetContents->layout()->addWidget(label);
-    connect(label, &ClickLabel::clicked, [=]() {  QDesktopServices::openUrl(QUrl::fromLocalFile(preview.documentPath)); });
+    connect(label, &ClickLabel::clicked, [=]() {
+        QSettings settings;
+        QString command = settings.value("pdfviewer").toString();
+        qDebug() << command;
+        if(command != "" && command.contains("%p") && command.contains("%f"))
+        {
+            command = command.replace("%f", preview.documentPath);
+            command = command.replace("%p", QString::number(preview.page));
+            QStringList splitted = command.split(" ");
+            if(splitted.size() > 1)
+            {
+                QString cmd = splitted[0];
+                QStringList args = splitted.mid(1);
+                QProcess::startDetached(cmd, args);
+            }
+        }
+        else
+        {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(preview.documentPath));
+        }
+    });
 }
 
 void MainWindow::lineEditReturnPressed()
