@@ -26,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->treeResultsList->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
 
     ui->tabWidget->setCurrentIndex(0);
+    ui->statusBar->addWidget(ui->lblSearchResults);
+    ui->statusBar->addWidget(ui->pdfProcessBar);
+    ui->pdfProcessBar->hide();
 }
 
 void MainWindow::connectSignals()
@@ -51,9 +54,17 @@ bool MainWindow::pdfTabActive()
 
 void MainWindow::tabChanged()
 {
-    if(pdfTabActive() && pdfDirty)
+    if(pdfTabActive())
     {
-        makePdfPreview();
+        if(pdfDirty)
+        {
+            makePdfPreview();
+        }
+        ui->pdfProcessBar->show();
+    }
+    else
+    {
+        ui->pdfProcessBar->hide();
     }
 }
 
@@ -62,6 +73,7 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
     ClickLabel *label = new ClickLabel();
     label->setPixmap(QPixmap::fromImage(preview.previewImage));
     ui->scrollAreaWidgetContents->layout()->addWidget(label);
+    ui->pdfProcessBar->setValue(++processedPdfPreviews);
     connect(label, &ClickLabel::clicked, [=]() {
         QSettings settings;
         QString command = settings.value("pdfviewer").toString();
@@ -112,7 +124,7 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
 {
    this->pdfSearchResults.clear();
    ui->treeResultsList->clear();
-
+   ui->lblSearchResults->setText("Results: " + QString::number(results.size()));
    for(const SearchResult &result : results)
    {
        QFileInfo pathInfo(result.path);
@@ -148,7 +160,9 @@ void MainWindow::makePdfPreview()
    qDeleteAll(ui->scrollAreaWidgetContents->children());
 
    ui->scrollAreaWidgetContents->setLayout(new QHBoxLayout());
-    emit startPdfPreviewGeneration(this->pdfSearchResults, 0.75);
+   ui->pdfProcessBar->setMaximum(this->pdfSearchResults.size());
+   processedPdfPreviews = 0;
+   emit startPdfPreviewGeneration(this->pdfSearchResults, 0.75);
 }
 
 
