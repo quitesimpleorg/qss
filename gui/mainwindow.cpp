@@ -5,9 +5,11 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QClipboard>
+#include <QtGlobal>
 #include <QSettings>
 #include <QDateTime>
 #include <QProcess>
+#include <QComboBox>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "clicklabel.h"
@@ -44,8 +46,13 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::startPdfPreviewGeneration, pdfWorker, &PdfWorker::generatePreviews);
     connect(pdfWorker, &PdfWorker::previewReady, this, &MainWindow::pdfPreviewReceived);
     connect(pdfWorker, &PdfWorker::previewsFinished, [&] { this->pdfDirty = false; });
+    connect(ui->comboScale, qOverload<const QString &>(&QComboBox::currentIndexChanged), this, &MainWindow::comboScaleChanged);
 }
 
+void MainWindow::comboScaleChanged(QString text)
+{
+    makePdfPreview();
+}
 bool MainWindow::pdfTabActive()
 {
     return ui->tabWidget->currentIndex() == 1;
@@ -155,7 +162,10 @@ void MainWindow::makePdfPreview()
    ui->scrollAreaWidgetContents->setLayout(new QHBoxLayout());
    ui->pdfProcessBar->setMaximum(this->pdfSearchResults.size());
    processedPdfPreviews = 0;
-   emit startPdfPreviewGeneration(this->pdfSearchResults, 0.75);
+   QString scaleText = ui->comboScale->currentText();
+   scaleText.chop(1);
+
+   emit startPdfPreviewGeneration(this->pdfSearchResults, scaleText.toInt() / 100.);
 }
 
 

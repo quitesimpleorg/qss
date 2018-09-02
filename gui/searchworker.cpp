@@ -90,6 +90,7 @@ QString SearchWorker::createSql(const SearchWorker::Command &cmd)
 {
     QString key = cmd.key;
     QString value = cmd.value;
+    value = value.replace("'", "\\'");
     if(key == "AND" || key == "OR" || key=="(" || key==")")
     {
         return " " + key + " ";

@@ -27,7 +27,7 @@
        <enum>QTabWidget::South</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="resultsTab">
        <attribute name="title">
@@ -99,9 +99,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="comboScale">
             <property name="currentText">
-             <string>25%</string>
+             <string>75%</string>
             </property>
             <item>
              <property name="text">

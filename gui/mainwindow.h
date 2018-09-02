@@ -45,6 +45,7 @@ private slots:
     void showSearchResultsContextMenu(const QPoint &point);
     void tabChanged();
     void pdfPreviewReceived(PdfPreview preview);
+    void comboScaleChanged(QString text);
 };
 
 #endif // MAINWINDOW_H
