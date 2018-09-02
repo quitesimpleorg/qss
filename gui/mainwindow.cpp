@@ -33,10 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::connectSignals()
 {
-    connect(ui->txtSearch, &QLineEdit::textChanged, this, &MainWindow::lineEditTextChanged);
     connect(ui->txtSearch, &QLineEdit::returnPressed, this, &MainWindow::lineEditReturnPressed);
-    connect(this, &MainWindow::beginFileSearch, searchWorker, &SearchWorker::searchForFile);
-    connect(this, &MainWindow::beginContentSearch, searchWorker, &SearchWorker::searchForContent);
+    connect(this, &MainWindow::beginSearch, searchWorker, &SearchWorker::search);
     connect(searchWorker, &SearchWorker::searchResultsReady, this, &MainWindow::handleSearchResults);
     connect(searchWorker, &SearchWorker::searchCancelled, this, &MainWindow::handleCancelledSearch);
     connect(ui->treeResultsList, &QTreeWidget::itemActivated, this, &MainWindow::treeSearchItemActivated);
@@ -99,25 +97,9 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
 
 void MainWindow::lineEditReturnPressed()
 {
-    if(pdfTabActive() && pdfDirty)
-    {
-        makePdfPreview();
-    }
-}
-
-void MainWindow::lineEditTextChanged()
-{
     QString q = ui->txtSearch->text();
-    if(q.startsWith("|"))
-    {
-        q = q.mid(1);
-        emit beginContentSearch(q);
-    }
-    else
-    {
-        emit beginFileSearch(q);
-    }
-
+    //TODO: validate q;
+    emit beginSearch(q);
 }
 
 void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
@@ -147,6 +129,10 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
    ui->treeResultsList->resizeColumnToContents(0);
    ui->treeResultsList->resizeColumnToContents(1);
    pdfDirty = ! this->pdfSearchResults.empty();
+   if(pdfTabActive() && pdfDirty)
+   {
+       makePdfPreview();
+   }
 
 }
 
