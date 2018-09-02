@@ -15,11 +15,6 @@ SearchWorker::SearchWorker(const QString &dbpath)
     {
         qDebug() << "failed to open database";
     }
-    queryContent = new QSqlQuery(db);
-    queryFile = new QSqlQuery(db);
-    queryFile->prepare("SELECT path, mtime FROM file WHERE path LIKE ? ORDER BY mtime DESC");
-
-    queryContent->prepare("SELECT file.path, content.page, file.mtime FROM file INNER JOIN content ON file.id = content.fileid INNER JOIN content_fts ON content.id = content_fts.ROWID WHERE content_fts.content MATCH ? ORDER By file.mtime DESC, content.page ASC");
 }
 
 QVector<SearchWorker::Command> SearchWorker::tokenize(QString expression)
@@ -66,7 +61,7 @@ QVector<SearchWorker::Command> SearchWorker::tokenize(QString expression)
                 result.append(Command("AND"));
             }
             wasbool = false;
-            result.append(Command("contains", loneword));
+            result.append(Command("path.contains", loneword));
         }
         if(filtername != "")
         {
@@ -114,7 +109,7 @@ QString SearchWorker::createSql(const SearchWorker::Command &cmd)
     {
         return " content.page = " + value;
     }
-    if(key == "contains")
+    if(key == "contains" || key == "c")
     {
         return " ( COALESCE( (SELECT 1 FROM content_fts WHERE content_fts.content MATCH '" + value + "' AND content_fts.ROWID= content.id), 0 ) )";
     }
@@ -131,38 +126,6 @@ QString SearchWorker::makeSql(const QVector<SearchWorker::Command> &tokens)
         result += createSql(c);
     }
     return result;
-}
-void SearchWorker::searchForFile(const QString &query)
-{
-    QVector<SearchResult> results;
-    queryFile->addBindValue("%" + query + "%");
-    queryFile->exec();
-    while(queryFile->next())
-    {
-        SearchResult result;
-        result.page = 0;
-        result.path = queryFile->value(0).toString();
-        result.mtime = queryFile->value(1).toUInt();
-
-        results.append(result);
-    }
-    emit searchResultsReady(results);
-}
-void SearchWorker::searchForContent(const QString &query)
-{
-    QVector<SearchResult> results;
-    queryContent->addBindValue(query);
-    queryContent->exec();
-    while(queryContent->next())
-    {
-        SearchResult result;
-
-        result.path = queryContent->value(0).toString();
-        result.page = queryContent->value(1).toUInt();
-        result.mtime = queryContent->value(2).toUInt();
-        results.append(result);
-    }
-    emit searchResultsReady(results);
 }
 
 void SearchWorker::search(const QString &query)

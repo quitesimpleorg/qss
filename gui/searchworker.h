@@ -26,8 +26,6 @@ class SearchWorker : public QObject
 
     Q_OBJECT
 private:
-    QSqlQuery *queryFile;
-    QSqlQuery *queryContent;
     QVector<Command> tokenize(QString expression);
     QString createSql(const Command &cmd);
     QString makeSql(const QVector<Command> &tokens);
@@ -36,8 +34,6 @@ public:
     SearchWorker();
     SearchWorker(const QString &dbpath);
 public slots:
-    void searchForFile(const QString &query);
-    void searchForContent(const QString &query);
     void search(const QString &query);
 signals:
     void searchResultsReady(const QVector<SearchResult> &results);
