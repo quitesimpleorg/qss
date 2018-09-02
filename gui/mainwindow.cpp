@@ -99,6 +99,7 @@ void MainWindow::lineEditReturnPressed()
 {
     QString q = ui->txtSearch->text();
     //TODO: validate q;
+    ui->lblSearchResults->setText("Searching...");
     emit beginSearch(q);
 }
 
