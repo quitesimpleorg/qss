@@ -133,7 +133,17 @@ void SearchWorker::search(const QString &query)
     QSqlQuery dbquery(db);
     QVector<SearchResult> results;
     QString whereSql = makeSql(tokenize(query));
-    QString prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime FROM file INNER JOIN content ON file.id = content.fileid INNER JOIN content_fts ON content.id = content_fts.ROWID WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
+
+    QString prep;
+    //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
+    if(whereSql.contains("content."))
+    {
+        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime FROM file INNER JOIN content ON file.id = content.fileid INNER JOIN content_fts ON content.id = content_fts.ROWID WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
+    }
+    else
+    {
+        prep = "SELECT file.path AS path, 0 as page, file.mtime AS mtime FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
+    }
     dbquery.prepare(prep);
     dbquery.exec();
     qDebug() << "prepped: " << prep;
