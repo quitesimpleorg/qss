@@ -40,8 +40,8 @@ private slots:
     void lineEditReturnPressed();
     void handleSearchResults(const QVector<SearchResult> &results);
     void handleCancelledSearch();
+    void handleSearchError(QString error);
     void treeSearchItemActivated(QTreeWidgetItem *item, int i);
-
     void showSearchResultsContextMenu(const QPoint &point);
     void tabChanged();
     void pdfPreviewReceived(PdfPreview preview);

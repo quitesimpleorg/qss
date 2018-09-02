@@ -3,6 +3,7 @@
 #include <QRegularExpression>
 #include <QDebug>
 #include <QSqlError>
+#include <QStack>
 SearchWorker::SearchWorker()
 {
 
@@ -19,6 +20,10 @@ SearchWorker::SearchWorker(const QString &dbpath)
 
 QVector<SearchWorker::Command> SearchWorker::tokenize(QString expression)
 {
+    if(!checkParanthesis(expression))
+    {
+        throw std::invalid_argument("Invalid paranthesis");
+    }
     //TODO: merge lonewords
     QVector<Command> result;
     QRegularExpression rx("((?<filtername>(\\.|\\w)+):(?<args>\\((?<innerargs>[^\\)]+)\\)|(\\w)+)|(?<boolean>AND|OR|!)|(?<bracket>\\(|\\))|(?<loneword>\\w+))");
@@ -111,11 +116,9 @@ QString SearchWorker::createSql(const SearchWorker::Command &cmd)
     }
     if(key == "contains" || key == "c")
     {
-        return " ( COALESCE( (SELECT 1 FROM content_fts WHERE content_fts.content MATCH '" + value + "' AND content_fts.ROWID= content.id), 0 ) )";
+        return " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH '" + value + "' )";
     }
-    qDebug() << "NOHIT" << key;
-    //TODO: exception?
-    return "NOTHING";
+    throw std::invalid_argument("Unknown filter: " + key.toStdString());
 }
 
 QString SearchWorker::makeSql(const QVector<SearchWorker::Command> &tokens)
@@ -128,26 +131,73 @@ QString SearchWorker::makeSql(const QVector<SearchWorker::Command> &tokens)
     return result;
 }
 
+bool SearchWorker::checkParanthesis(QString expression)
+{
+    QStack<QChar> open;
+    QStack<QChar> close;
+
+    for(QChar &c : expression)
+    {
+        if(c == '(')
+        {
+            open.push(c);
+        }
+        if(c == ')')
+        {
+            close.push(c);
+        }
+    }
+    if(open.size() != close.size())
+    {
+        return false;
+    }
+    while(!open.empty() && !close.empty())
+    {
+        QChar o = open.pop();
+        QChar c = close.pop();
+        if(o != '(' && c != ')' )
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void SearchWorker::search(const QString &query)
 {
     QSqlQuery dbquery(db);
     QVector<SearchResult> results;
-    QString whereSql = makeSql(tokenize(query));
+    QString whereSql;
+    try
+    {
+        whereSql = makeSql(tokenize(query));
+    }
+    catch(const std::exception &e)
+    {
+      emit searchError(e.what());
+      return;
+    }
 
     QString prep;
     //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
     if(whereSql.contains("content."))
     {
-        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime FROM file INNER JOIN content ON file.id = content.fileid INNER JOIN content_fts ON content.id = content_fts.ROWID WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
+        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
     }
     else
     {
         prep = "SELECT file.path AS path, 0 as page, file.mtime AS mtime FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
     }
     dbquery.prepare(prep);
-    dbquery.exec();
-    qDebug() << "prepped: " << prep;
-    qDebug() << dbquery.lastError();
+    bool success = dbquery.exec();
+    if(!success)
+    {
+        qDebug() << "prepped: " << prep;
+        qDebug() << dbquery.lastError();
+        emit searchError(dbquery.lastError().text());
+        return;
+    }
+
     while(dbquery.next())
     {
         SearchResult result;
