@@ -1,4 +1,3 @@
-- when opening pdf, jump directly to page
 - ability to set the WHERE condition (allow editing the SQL query)
 - Scale factors
 - Abort running pdf preview generation when we search for something new
