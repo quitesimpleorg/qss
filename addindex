@@ -73,6 +73,9 @@ def process_odt(path):
 	fd.close()
 	return singlepagelist(striptags(content))
 	
+def process_ods(path):
+	return process_odt(path)
+	
 def readtext(path):
 	fd = open(path, "rb")
 	content = fd.read()
@@ -89,7 +92,7 @@ def readtext(path):
 			else:
 				result = str(content.decode(encoding))
 		except:
-			print("FAILE DECODING: " + path)
+			print("FAILED DECODING: " + path)
 			result = ""
 	return result
 	
@@ -139,17 +142,10 @@ def insert(path):
 		cursor.execute("INSERT INTO content(fileid, page, content) VALUES(?, ?, ?)", (fileid, pagedata.page, pagedata.content))
 	cursor.execute("COMMIT TRANSACTION")
 
-preprocess={".pdf":process_pdf, ".odt":process_odt, ".html":process_striptags, ".xml":process_nothing, ".txt":process_text, 
+preprocess={".pdf":process_pdf, ".odt":process_odt, ".ods":process_ods, ".html":process_striptags, ".xml":process_nothing, ".txt":process_text, 
 			".sql":process_text, ".c":process_text, ".cpp":process_text, ".js":process_text, ".java":process_text, 
 			".py":process_text, '.md':process_text}	
 
-
-
-def yieldstdinfiles():
-	for line in sys.stdin:
-		yield line.replace("\n", "")
-
-	
 def init():
 	global dbcon
 	dbcon = sqlite3.connect(config.DBPATH, isolation_level=None)
@@ -160,7 +156,7 @@ if __name__ == '__main__':
 	with Pool(processes=4,initializer=init) as pool:
 		
 		if len(sys.argv) < 2:
-			pool.map(insert, (l for l in yieldstdinfiles()))
+			pool.map(insert, (l.replace("\n", "") for l in sys.stdin))
 		else:
 			pool.map(insert, sys.argv[1:])
 
