@@ -58,6 +58,26 @@ bool MainWindow::pdfTabActive()
     return ui->tabWidget->currentIndex() == 1;
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    bool quit = ((event->modifiers() & Qt::ControlModifier && event->key() == Qt::Key_Q) || event->key() == Qt::Key_Escape);
+    if(quit)
+    {
+        qApp->quit();
+    }
+
+    if(event->modifiers() & Qt::ControlModifier)
+    {
+
+        if(event->key() == Qt::Key_L)
+        {
+            ui->txtSearch->setFocus();
+            ui->txtSearch->selectAll();
+        }
+    }
+    QWidget::keyPressEvent(event);
+}
+
 void MainWindow::tabChanged()
 {
     if(pdfTabActive())

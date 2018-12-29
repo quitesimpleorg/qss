@@ -5,7 +5,7 @@
 #include <QThread>
 #include <QTreeWidgetItem>
 #include <QFileIconProvider>
-
+#include <QKeyEvent>
 #include "searchworker.h"
 #include "pdfworker.h"
 namespace Ui {
@@ -35,6 +35,7 @@ private:
     void connectSignals();
     void makePdfPreview();
     bool pdfTabActive();
+    void keyPressEvent(QKeyEvent *event) override;
     unsigned int processedPdfPreviews;
 private slots:
     void lineEditReturnPressed();
@@ -46,6 +47,7 @@ private slots:
     void tabChanged();
     void pdfPreviewReceived(PdfPreview preview);
     void comboScaleChanged(QString text);
+
 };
 
 #endif // MAINWINDOW_H
