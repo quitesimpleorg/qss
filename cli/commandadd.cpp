@@ -140,7 +140,7 @@ int CommandAdd::handle(QStringList arguments)
                       });
 
     parser.addHelpOption();
-    parser.addPositionalArgument("paths", "List of paths to process/add to the index", "[paths...]");
+    parser.addPositionalArgument("add", "Add paths to the index", "add [paths...]");
 
     parser.process(arguments);
     bool keepGoing = false;
