@@ -1,5 +1,7 @@
+- cli: update command, delete command, tagging
 - ability to set the WHERE condition (allow editing the SQL query)
 - Scale factors
+- Basic OCR in images (screenshots)
 - Abort running pdf preview generation when we search for something new
 - Index .ebup
 - Preview for: .txt, source code files, .ebup, images
