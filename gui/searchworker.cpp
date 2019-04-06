@@ -119,6 +119,7 @@ QString SearchWorker::createSql(const SearchWorker::Command &cmd)
     {
         return " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH '" + value + "' )";
     }
+
     throw std::invalid_argument("Unknown filter: " + key.toStdString());
 }
 
@@ -183,11 +184,11 @@ void SearchWorker::search(const QString &query)
     //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
     if(whereSql.contains("content."))
     {
-        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
+        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
     }
     else
     {
-        prep = "SELECT file.path AS path, 0 as page, file.mtime AS mtime FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
+        prep = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
     }
     dbquery.prepare(prep);
     bool success = dbquery.exec();
@@ -206,6 +207,8 @@ void SearchWorker::search(const QString &query)
         result.path = dbquery.value("path").toString();
         result.page = dbquery.value("page").toUInt();
         result.mtime = dbquery.value("mtime").toUInt();
+        result.size = dbquery.value("filesize").toUInt();
+        result.filetype = dbquery.value("filetype").toChar();
         results.append(result);
     }
     emit searchResultsReady(results);
