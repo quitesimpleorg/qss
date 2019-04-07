@@ -19,6 +19,21 @@ bool Command::fileExistsInDatabase(QSqlDatabase &db, QString path, qint64 mtime)
     return query.value(0).toBool();
 }
 
+bool Command::fileExistsInDatabase(QSqlDatabase &db, QString path)
+{
+    auto query = QSqlQuery("SELECT 1 FROM file WHERE path = ?", db);
+    query.addBindValue(path);
+    if(!query.exec())
+    {        throw QSSGeneralException("Error while trying to query for file existance");
+    }
+    if(!query.next())
+    {
+        return false;
+    }
+    return query.value(0).toBool();
+}
+
+
 QSqlDatabase Command::dbConnection()
 {
     if(dbStore.hasLocalData())

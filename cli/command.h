@@ -8,6 +8,7 @@
 class Command
 {
 protected:
+    bool fileExistsInDatabase(QSqlDatabase &db, QString path);
     bool fileExistsInDatabase(QSqlDatabase &db, QString path, qint64 mtime);
     QByteArray readFile(QString path) const;
     QString dbConnectionString;

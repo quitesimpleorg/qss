@@ -27,7 +27,9 @@ SOURCES += \
     odtprocessor.cpp \
     utils.cpp \
     odsprocessor.cpp \
-    qssgeneralexception.cpp
+    qssgeneralexception.cpp \
+    commanddelete.cpp \
+    commandupdate.cpp
 
 HEADERS += \
     encodingdetector.h \
@@ -42,5 +44,7 @@ HEADERS += \
     odtprocessor.h \
     utils.h \
     odsprocessor.h \
-    qssgeneralexception.h
+    qssgeneralexception.h \
+    commanddelete.h \
+    commandupdate.h
 INCLUDEPATH += /usr/include/poppler/qt5/ /usr/include/quazip5

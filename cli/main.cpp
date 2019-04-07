@@ -17,6 +17,7 @@
 #include "defaulttextprocessor.h"
 #include "command.h"
 #include "commandadd.h"
+#include "commanddelete.h"
 void printUsage(QString argv0)
 {
     qInfo() << "Usage: " << argv0 << "command";
@@ -30,7 +31,7 @@ Command *commandFromName(QString name, QString connectionstring)
     }
     if(name == "delete")
     {
-
+        return new CommandDelete(connectionstring);
     }
     if(name == "update")
     {
