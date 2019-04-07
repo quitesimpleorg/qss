@@ -1,4 +1,5 @@
 - cli: update command, delete command, tagging
+- cli: command line parser: wrong position of [options] 
 - ability to set the WHERE condition (allow editing the SQL query)
 - Scale factors
 - Basic OCR in images (screenshots)
