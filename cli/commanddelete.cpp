@@ -11,7 +11,8 @@ int CommandDelete::handle(QStringList arguments)
     QCommandLineParser parser;
     parser.addOptions({
                           { { "v", "verbose" }, "Print path of the files while deleting them" },
-                          { "pattern", "Only delete files from index matching the pattern, e. g. */.git/*", "pattern" },
+                          { { "n", "dry-run"}, "Only print which files would be deleted from the database, don't delete them"},
+                          { "pattern", "Only delete files from index matching the pattern, e. g. */.git/*. Only applies to --deleted or standalone.", "pattern" },
                           { "deleted", "Delete all files from the index that don't exist anymore" }
                       });
 
@@ -21,6 +22,7 @@ int CommandDelete::handle(QStringList arguments)
     parser.process(arguments);
     bool removeNonExistant = parser.isSet("deleted");
     bool verbose = parser.isSet("verbose");
+    bool dryRun = parser.isSet("dry-run");
     QString pattern = parser.value("pattern");
 
 
@@ -41,7 +43,7 @@ int CommandDelete::handle(QStringList arguments)
 
     if(removeNonExistant)
     {
-        //TODO: try to translate pattern to SQL WHERE
+        //TODO: try to translate pattern to SQL WHERE statement
         QSqlQuery pathsQuery("SELECT path FROM file", db);
         if(!pathsQuery.exec())
         {
@@ -52,22 +54,35 @@ int CommandDelete::handle(QStringList arguments)
         while(pathsQuery.next())
         {
             QString path = pathsQuery.value(0).toString();
-            if(usePattern && regexPattern.exactMatch(path))
+            bool removeFile = true;
+            if(usePattern)
+            {
+                removeFile = regexPattern.exactMatch(path);
+            }
+            if(removeFile)
             {
                 QFile file(path);
                 if(!file.exists())
                 {
-                    QSqlQuery query("DELETE FROM file WHERE path = ?", db);
-                    query.addBindValue(path);
-                    if(!query.exec())
+                    if(!dryRun)
                     {
-                        qDebug() << "Failed to delete " << path << query.lastError();
-                        return 1;
+                        QSqlQuery query("DELETE FROM file WHERE path = ?", db);
+                        query.addBindValue(path);
+                        if(!query.exec())
+                        {
+                            qDebug() << "Failed to delete " << path << query.lastError();
+                            return 1;
+                        }
+                        if(verbose)
+                        {
+                            qInfo() << "Deleted " << path;
+                        }
                     }
-                    if(verbose)
+                    else
                     {
-                        qInfo() << "Deleted " << path;
+                        qInfo() << "Would delete " << path;
                     }
+
                 }
             }
         }
@@ -80,19 +95,23 @@ int CommandDelete::handle(QStringList arguments)
         QString absPath = fileInfo.absoluteFilePath();
         if(fileExistsInDatabase(db, absPath))
         {
-            QSqlQuery deletionQuery("DELETE FROM file WHERE path = ?", db);
-            deletionQuery.addBindValue(absPath);
-            if(deletionQuery.exec())
+            if(!dryRun)
             {
-                if(verbose)
+                QSqlQuery deletionQuery("DELETE FROM file WHERE path = ?", db);
+                deletionQuery.addBindValue(absPath);
+                if(deletionQuery.exec())
                 {
-                    qInfo() << "Deleted" << absPath;
+                    if(verbose)
+                    {
+                        qInfo() << "Deleted" << absPath;
+                    }
+                }
+                else
+                {
+                    qDebug() << "Failed to delete:" << absPath << deletionQuery.lastError();
                 }
             }
-            else
-            {
-                qDebug() << "Failed to delete:" << absPath << deletionQuery.lastError();
-            }
+
         }
         else
         {
