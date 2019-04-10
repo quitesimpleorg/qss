@@ -69,7 +69,8 @@ AddFileResult CommandAdd::addFile(QString path)
         pageData = processor->process(Utils::readFile(absPath));
     }
 
-    if(pageData.isEmpty())
+    //Could happen if a file corrupted for example
+    if(pageData.isEmpty() && processor != nothingProcessor)
     {
         Utils::error() << "Could not get any content for " << absPath << endl;
     }
