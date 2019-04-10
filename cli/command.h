@@ -5,6 +5,7 @@
 #include <QSqlQuery>
 #include <QThreadStorage>
 #include <QVariant>
+#include "utils.h"
 class Command
 {
 protected:

@@ -71,7 +71,7 @@ AddFileResult CommandAdd::addFile(QString path)
 
     if(pageData.isEmpty())
     {
-        qDebug() << "Could not get any content for " << absPath;
+        Utils::error() << "Could not get any content for " << absPath << endl;
     }
 
 
@@ -79,7 +79,7 @@ AddFileResult CommandAdd::addFile(QString path)
     //QMutexLocker locker(&writeMutex);
     if(!db.transaction())
     {
-        qDebug() << "Failed to open transaction for " << absPath << " : " << db.lastError();
+        Utils::error() << "Failed to open transaction for " << absPath << " : " << db.lastError() << endl;
         return DBFAIL;
     }
 
@@ -87,7 +87,7 @@ AddFileResult CommandAdd::addFile(QString path)
     delQuery.addBindValue(absPath);
     if(!delQuery.exec())
     {
-        qDebug() << "Failed DELETE query" <<  delQuery.lastError();
+        Utils::error() << "Failed DELETE query" <<  delQuery.lastError() << endl;
         db.rollback();
         return DBFAIL;
     }
@@ -100,7 +100,7 @@ AddFileResult CommandAdd::addFile(QString path)
     inserterQuery.addBindValue(fileType);
     if(!inserterQuery.exec())
     {
-        qDebug() << "Failed INSERT query" <<  inserterQuery.lastError();
+        Utils::error() << "Failed INSERT query" <<  inserterQuery.lastError() << endl;
         db.rollback();
         return DBFAIL;
     }
@@ -114,7 +114,7 @@ AddFileResult CommandAdd::addFile(QString path)
         if(!contentQuery.exec())
         {
             db.rollback();
-            qDebug() << "Failed content insertion " << contentQuery.lastError();
+            Utils::error() << "Failed content insertion " << contentQuery.lastError() << endl;
             return DBFAIL;
         }
     }
@@ -122,7 +122,7 @@ AddFileResult CommandAdd::addFile(QString path)
     if(!db.commit())
     {
         db.rollback();
-        qDebug() << "Failed to commit transaction for " << absPath <<  " : " << db.lastError();
+        Utils::error() << "Failed to commit transaction for " << absPath <<  " : " << db.lastError() << endl;
         return DBFAIL;
     }
     return OK;
@@ -184,12 +184,12 @@ int CommandAdd::handle(QStringList arguments)
         }
         if(verbose)
         {
-            qDebug() << "Processing " << path;
+            Utils::info() << "Processing " << path << endl;
         }
         auto result = addFile(path);
         if(result == DBFAIL)
         {
-            qDebug() << "Failed to add " << path;
+            Utils::error() << "Failed to add " << path << endl;
             if(!keepGoing)
             {
                 terminate = true;
@@ -199,11 +199,11 @@ int CommandAdd::handle(QStringList arguments)
         {
             if(result == SKIPPED)
             {
-                qDebug() << "Skipped" << path << "as it already exists in the database";
+                Utils::info() << "Skipped" << path << "as it already exists in the database" << endl;
             }
             else
             {
-                qDebug() << "Added" << path;
+                Utils::info() << "Added" << path << endl;
             }
         }
 

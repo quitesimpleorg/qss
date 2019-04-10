@@ -15,6 +15,7 @@
 #include "encodingdetector.h"
 #include "pdfprocessor.h"
 #include "defaulttextprocessor.h"
+#include "utils.h"
 #include "command.h"
 #include "commandadd.h"
 #include "commanddelete.h"
@@ -66,12 +67,12 @@ int main(int argc, char *argv[])
         }
         catch(const QSSGeneralException &e)
         {
-            qDebug() << "Exception caught, message: " << e.message;
+            Utils::error() << "Exception caught, message: " << e.message << endl;
         }
     }
     else
     {
-        qDebug() << "Unknown command " << commandName;
+        Utils::error() << "Unknown command " << commandName << endl;
     }
     return 1;
 }

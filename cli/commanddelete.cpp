@@ -23,7 +23,7 @@ int CommandDelete::removeNonExistent(QSqlDatabase &db, bool verbose, bool dryRun
     QSqlQuery pathsQuery("SELECT path FROM file", db);
     if(!pathsQuery.exec())
     {
-        qDebug() << "Failed to query current paths";
+        Utils::error() << "Failed to query current paths" << endl;
         return 1;
     }
 
@@ -46,17 +46,17 @@ int CommandDelete::removeNonExistent(QSqlDatabase &db, bool verbose, bool dryRun
                     query.addBindValue(path);
                     if(!query.exec())
                     {
-                        qDebug() << "Failed to delete " << path << query.lastError();
+                        Utils::error() << "Failed to delete " << path << query.lastError() << endl;
                         return 1;
                     }
                     if(verbose)
                     {
-                        qInfo() << "Deleted " << path;
+                        Utils::info() << "Deleted " << path << endl;
                     }
                 }
                 else
                 {
-                    qInfo() << "Would delete " << path;
+                    Utils::info() << "Would delete " << path << endl;
                 }
 
             }
@@ -81,12 +81,12 @@ int CommandDelete::removePaths(const QStringList &paths, QSqlDatabase &db, bool 
                 {
                     if(verbose)
                     {
-                        qInfo() << "Deleted" << absPath;
+                        Utils::info() << "Deleted" << absPath << endl;
                     }
                 }
                 else
                 {
-                    qDebug() << "Failed to delete:" << absPath << deletionQuery.lastError();
+                    Utils::error()<< "Failed to delete:" << absPath << deletionQuery.lastError() << endl;
                     result = 1;
                 }
             }
@@ -94,7 +94,7 @@ int CommandDelete::removePaths(const QStringList &paths, QSqlDatabase &db, bool 
         }
         else
         {
-            qInfo() << "No such file in database:" << absPath;
+            Utils::error() << "No such file in database:" << absPath << endl;
             result = 1;
         }
     }

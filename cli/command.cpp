@@ -44,7 +44,7 @@ QSqlDatabase Command::dbConnection()
     db.setDatabaseName(this->dbConnectionString);
     if(!db.open())
     {
-        qDebug() << "Failed to open the database: " << this->dbConnectionString;
+        Utils::error() << "Failed to open the database: " << this->dbConnectionString;
     }
     dbStore.setLocalData(db);
     return db;
