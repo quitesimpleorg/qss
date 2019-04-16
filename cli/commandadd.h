@@ -2,18 +2,11 @@
 #define COMMANDADD_H
 #include <QMutex>
 #include "command.h"
-enum AddFileResult
-{
-    OK,
-    SKIPPED,
-    DBFAIL
-};
-
+#include "filesaver.h"
 class CommandAdd : public Command
 {
 private:
-    AddFileResult addFile(QString path);
-    QMutex writeMutex;
+    SaveFileResult addFile(QString path);
 public:
     using Command::Command;
 

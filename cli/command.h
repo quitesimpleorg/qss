@@ -6,18 +6,17 @@
 #include <QThreadStorage>
 #include <QVariant>
 #include "utils.h"
+#include "sqlitedbservice.h"
 class Command
 {
 protected:
-    bool fileExistsInDatabase(QSqlDatabase &db, QString path);
-    bool fileExistsInDatabase(QSqlDatabase &db, QString path, qint64 mtime);
-    QByteArray readFile(QString path) const;
+
+    SqliteDbService *dbService;
     QString dbConnectionString;
-    QThreadStorage<QSqlDatabase> dbStore;
 public:
-    Command(QString dbConnectionString)
+    Command(SqliteDbService &dbService)
     {
-        this->dbConnectionString = dbConnectionString;
+        this->dbService = &dbService;
     }
 
     QSqlDatabase dbConnection();

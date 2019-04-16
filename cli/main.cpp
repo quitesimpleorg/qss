@@ -19,24 +19,27 @@
 #include "command.h"
 #include "commandadd.h"
 #include "commanddelete.h"
+#include "commandupdate.h"
+#include "databasefactory.h"
+#include "logger.h"
 void printUsage(QString argv0)
 {
     qInfo() << "Usage: " << argv0 << "command";
 }
 
-Command *commandFromName(QString name, QString connectionstring)
+Command *commandFromName(QString name, SqliteDbService &dbService)
 {
     if(name == "add")
     {
-        return new CommandAdd(connectionstring);
+        return new CommandAdd(dbService);
     }
     if(name == "delete")
     {
-        return new CommandDelete(connectionstring);
+        return new CommandDelete(dbService);
     }
     if(name == "update")
     {
-
+        return new CommandUpdate(dbService);
     }
     if(name == "search")
     {
@@ -58,7 +61,10 @@ int main(int argc, char *argv[])
     }
 
     QString commandName = args.first();
-    Command *cmd = commandFromName(commandName, QProcessEnvironment::systemEnvironment().value("QSS_PATH"));
+    QString connectionString = QProcessEnvironment::systemEnvironment().value("QSS_PATH");
+    DatabaseFactory dbFactory(connectionString);
+    SqliteDbService dbService(dbFactory);
+    Command *cmd = commandFromName(commandName, dbService);
     if(cmd != nullptr)
     {
         try
@@ -67,12 +73,12 @@ int main(int argc, char *argv[])
         }
         catch(const QSSGeneralException &e)
         {
-            Utils::error() << "Exception caught, message: " << e.message << endl;
+            Logger::error() << "Exception caught, message: " << e.message << endl;
         }
     }
     else
     {
-        Utils::error() << "Unknown command " << commandName << endl;
+        Logger::error() << "Unknown command " << commandName << endl;
     }
     return 1;
 }
