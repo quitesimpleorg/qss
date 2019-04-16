@@ -1,3 +1,4 @@
+Consider injecting Logger (default stdout/stderr) to classes instead of using Logger::info()/Logger::error()::
 sync/share GUI and CLI data-structures. Better to share codebase in general
 - cli: update command, delete command, tagging
 - cli: command line parser: wrong position of [options] 
