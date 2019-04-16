@@ -4,6 +4,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QTextStream>
+#include <QDebug>
 #include "qssgeneralexception.h"
 
 class Utils
@@ -11,8 +12,7 @@ class Utils
 public:
     Utils();
     static QByteArray readFile(QString path);
-    static QDebug &info();
-    static QDebug &error();
+
 };
 
 #endif // UTILS_H

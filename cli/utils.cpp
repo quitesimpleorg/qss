@@ -20,22 +20,4 @@ QByteArray Utils::readFile(QString path)
     return data;
 }
 
-QDebug &Utils::info()
-{
-    static QDebug result  = []{
-        QFile *file = new QFile();
-        file->open(stderr, QIODevice::WriteOnly);
-        return QDebug(file);
-    }();
-    return result;
-}
 
-QDebug &Utils::error()
-{
-    static QDebug result  = []{
-        QFile *file = new QFile();
-        file->open(stdout, QIODevice::WriteOnly);
-        return QDebug(file);
-    }();
-    return result;
-}
