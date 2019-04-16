@@ -20,7 +20,6 @@ SOURCES += \
     processor.cpp \
     pdfprocessor.cpp \
     defaulttextprocessor.cpp \
-    command.cpp \
     commandadd.cpp \
     tagstripperprocessor.cpp \
     nothingprocessor.cpp \
@@ -29,7 +28,11 @@ SOURCES += \
     odsprocessor.cpp \
     qssgeneralexception.cpp \
     commanddelete.cpp \
-    commandupdate.cpp
+    commandupdate.cpp \
+    filesaver.cpp \
+    databasefactory.cpp \
+    sqlitedbservice.cpp \
+    logger.cpp
 
 HEADERS += \
     encodingdetector.h \
@@ -46,5 +49,10 @@ HEADERS += \
     odsprocessor.h \
     qssgeneralexception.h \
     commanddelete.h \
-    commandupdate.h
+    commandupdate.h \
+    filesaver.h \
+    filedata.h \
+    databasefactory.h \
+    sqlitedbservice.h \
+    logger.h
 INCLUDEPATH += /usr/include/poppler/qt5/ /usr/include/quazip5
