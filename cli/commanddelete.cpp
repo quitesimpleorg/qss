@@ -5,88 +5,71 @@
 #include <QRegularExpression>
 #include <QSqlError>
 #include "commanddelete.h"
+#include "logger.h"
 
-
-int CommandDelete::removeNonExistent(QSqlDatabase &db, bool verbose, bool dryRun, QString pattern)
+int CommandDelete::removeNonExistent(bool verbose, bool dryRun, QString pattern)
 {
-
-    //TODO: port this to QRegularExpression once >5.12 gets more widespread because of this bug
-    //https://bugreports.qt.io/browse/QTBUG-72539?focusedCommentId=439053&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel
-
-   // QRegularExpression regexPattern = QRegularExpression::wildcardToRegularExpression(pattern
-    bool usePattern = ! pattern.isEmpty();
-    QRegExp regexPattern(pattern);
-    regexPattern.setPatternSyntax(QRegExp::PatternSyntax::WildcardUnix);
-
-
-    //TODO: try to translate pattern to SQL WHERE statement
-    QSqlQuery pathsQuery("SELECT path FROM file", db);
-    if(!pathsQuery.exec())
+    int offset = 0;
+    int limit = 1000;
+    QVector<FileData> files;
+    int processedRows = this->dbService->getFiles(files, pattern, 0, limit);
+    while(processedRows > 0 )
     {
-        Utils::error() << "Failed to query current paths" << endl;
-        return 1;
-    }
-
-    while(pathsQuery.next())
-    {
-        QString path = pathsQuery.value(0).toString();
-        bool removeFile = true;
-        if(usePattern)
+        for(FileData &file : files)
         {
-            removeFile = regexPattern.exactMatch(path);
-        }
-        if(removeFile)
-        {
-            QFile file(path);
-            if(!file.exists())
+            if(!dryRun)
             {
-                if(!dryRun)
+                QFileInfo fileInfo(file.absPath);
+                if(fileInfo.exists())
                 {
-                    QSqlQuery query("DELETE FROM file WHERE path = ?", db);
-                    query.addBindValue(path);
-                    if(!query.exec())
+                    if(this->dbService->deleteFile(file.absPath))
                     {
-                        Utils::error() << "Failed to delete " << path << query.lastError() << endl;
+                        if(verbose)
+                        {
+                            Logger::info() << "Deleted" << file.absPath << endl;
+                        }
+                    }
+                    else
+                    {
+                        Logger::error()<< "Failed to delete:" << file.absPath << ", exiting." << endl
+                                         ;
                         return 1;
                     }
-                    if(verbose)
-                    {
-                        Utils::info() << "Deleted " << path << endl;
-                    }
                 }
-                else
-                {
-                    Utils::info() << "Would delete " << path << endl;
-                }
-
             }
-        }
-    }
-}
+            else
+            {
+                Logger::info() << "Would delete " << file.absPath << endl;
+            }
 
-int CommandDelete::removePaths(const QStringList &paths, QSqlDatabase &db, bool verbose, bool dryRun)
+        }
+        offset += limit;
+        processedRows = this->dbService->getFiles(files, pattern, 0, limit);
+    }
+    return 0;
+ }
+
+int CommandDelete::removePaths(const QStringList &paths, bool verbose, bool dryRun)
 {
     int result = 0;
     for(const QString &file : paths)
     {
         QFileInfo fileInfo(file);
         QString absPath = fileInfo.absoluteFilePath();
-        if(fileExistsInDatabase(db, absPath))
+        if(this->dbService->fileExistsInDatabase(absPath))
         {
             if(!dryRun)
             {
-                QSqlQuery deletionQuery("DELETE FROM file WHERE path = ?", db);
-                deletionQuery.addBindValue(absPath);
-                if(deletionQuery.exec())
+                if(this->dbService->deleteFile(absPath))
                 {
                     if(verbose)
                     {
-                        Utils::info() << "Deleted" << absPath << endl;
+                        Logger::info() << "Deleted" << absPath << endl;
                     }
                 }
                 else
                 {
-                    Utils::error()<< "Failed to delete:" << absPath << deletionQuery.lastError() << endl;
+                    Logger::error()<< "Failed to delete:" << absPath << endl;
                     result = 1;
                 }
             }
@@ -94,12 +77,13 @@ int CommandDelete::removePaths(const QStringList &paths, QSqlDatabase &db, bool 
         }
         else
         {
-            Utils::error() << "No such file in database:" << absPath << endl;
+            Logger::error() << "No such file in database:" << absPath << endl;
             result = 1;
         }
     }
     return result;
 }
+
 int CommandDelete::handle(QStringList arguments)
 {
     QCommandLineParser parser;
@@ -117,13 +101,10 @@ int CommandDelete::handle(QStringList arguments)
     bool verbose = parser.isSet("verbose");
     bool dryRun = parser.isSet("dry-run");
     QString pattern = parser.value("pattern");
-    QSqlDatabase db = dbConnection();
-
-
     if(parser.isSet("deleted"))
     {
 
-        int result = removeNonExistent(db, verbose, dryRun, pattern);
+        int result = removeNonExistent(verbose, dryRun, pattern);
         if(result != 0)
         {
             return result;
@@ -131,11 +112,15 @@ int CommandDelete::handle(QStringList arguments)
     }
 
     QStringList files = parser.positionalArguments();
-    int result = removePaths(files,db, verbose, dryRun);
-    if(result != 0)
+    if(files.length() > 0)
     {
-        return result;
+        int result = removePaths(files, verbose, dryRun);
+        if(result != 0)
+        {
+            return result;
+        }
     }
+
 
 
     return 0;

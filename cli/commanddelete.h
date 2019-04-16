@@ -9,8 +9,8 @@ public:
 
     int handle(QStringList arguments) override;
 private:
-    int removeNonExistent(QSqlDatabase &db, bool verbose, bool dryRun, QString pattern);
-    int removePaths(const QStringList &paths, QSqlDatabase &db, bool verbose, bool dryRun);
+    int removeNonExistent(bool verbose, bool dryRun, QString pattern);
+    int removePaths(const QStringList &paths, bool verbose, bool dryRun);
 };
 
 #endif // COMMANDDELETE_H
