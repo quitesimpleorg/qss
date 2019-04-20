@@ -20,6 +20,7 @@
 #include "commandadd.h"
 #include "commanddelete.h"
 #include "commandupdate.h"
+#include "commandsearch.h"
 #include "databasefactory.h"
 #include "logger.h"
 void printUsage(QString argv0)
@@ -43,8 +44,9 @@ Command *commandFromName(QString name, SqliteDbService &dbService)
     }
     if(name == "search")
     {
-
+        return new CommandSearch(dbService);
     }
+
     return nullptr;
 }
 

@@ -32,7 +32,8 @@ SOURCES += \
     filesaver.cpp \
     databasefactory.cpp \
     sqlitedbservice.cpp \
-    logger.cpp
+    logger.cpp \
+    commandsearch.cpp
 
 HEADERS += \
     encodingdetector.h \
@@ -54,5 +55,21 @@ HEADERS += \
     filedata.h \
     databasefactory.h \
     sqlitedbservice.h \
-    logger.h
+    logger.h \
+    commandsearch.h
 INCLUDEPATH += /usr/include/poppler/qt5/ /usr/include/quazip5
+
+
+
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../shared/release/ -lshared
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../shared/debug/ -lshared
+else:unix: LIBS += -L$$OUT_PWD/../shared/ -lshared
+
+INCLUDEPATH += $$PWD/../shared
+DEPENDPATH += $$PWD/../shared
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../shared/release/libshared.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../shared/debug/libshared.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../shared/release/shared.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../shared/debug/shared.lib
+else:unix: PRE_TARGETDEPS += $$OUT_PWD/../shared/libshared.a

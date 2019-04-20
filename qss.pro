@@ -1,2 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = gui cli
+SUBDIRS = gui cli \ 
+    shared
+
