@@ -4,6 +4,7 @@
 Logger::Logger(QFile *file)
 {
     out = new QDebug(file);
+    out->noquote();
     this->file = file;
 }
 
