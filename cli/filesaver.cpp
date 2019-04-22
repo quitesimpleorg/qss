@@ -130,7 +130,7 @@ SaveFileResult FileSaver::saveFile(const QFileInfo &fileInfo)
         }
         catch(QSSGeneralException &e)
         {
-            Logger::error() << "Error while processing" << absPath << ":" << e.message;
+            Logger::error() << "Error while processing" << absPath << ":" << e.message << endl;
             return PROCESSFAIL;
         }
     }
