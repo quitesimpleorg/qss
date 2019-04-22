@@ -15,6 +15,12 @@ QVector<PageData> PdfProcessor::process(const QByteArray &data) const
     {
         throw QSSGeneralException("Failed to process pdf data");
     }
+    if(doc->isEncrypted() || doc->isLocked())
+    {
+        throw QSSGeneralException("Doc is encrypted/locked");
+    }
+
+
     QRectF entirePage;
 
     auto pagecount = doc->numPages();
