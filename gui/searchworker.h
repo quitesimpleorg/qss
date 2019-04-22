@@ -5,7 +5,7 @@
 #include <QSqlQuery>
 #include <QString>
 #include <QVector>
-#include "searchresult.h"
+#include "../shared/searchresult.h"
 
 class SearchWorker : public QObject
 {

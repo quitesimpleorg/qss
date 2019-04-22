@@ -33,12 +33,11 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
         {
             break;
         }
-        Poppler::Document *doc = document(sr.path);
+        Poppler::Document *doc = document(sr.fileData.absPath);
         if(doc == nullptr)
         {
             continue;
         }
-        qDebug() << sr.path;
         if(doc->isLocked())
         {
             continue;
@@ -51,7 +50,7 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
 
         PdfPreview preview;
         preview.previewImage = image;
-        preview.documentPath = sr.path;
+        preview.documentPath = sr.fileData.absPath;
         preview.page = sr.page;
         emit previewReady(preview);
     }

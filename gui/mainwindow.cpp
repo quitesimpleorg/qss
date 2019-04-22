@@ -144,28 +144,28 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
    QString lastpath = "";
    for(const SearchResult &result : results)
    {
-      if(lastpath != result.path)
+      if(lastpath != result.fileData.absPath)
        {
-           QFileInfo pathInfo(result.path);
+           QFileInfo pathInfo(result.fileData.absPath);
            QString fileName =pathInfo.fileName();
            QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeResultsList);
 
-           QDateTime dt = QDateTime::fromSecsSinceEpoch(result.mtime);
+           QDateTime dt = QDateTime::fromSecsSinceEpoch(result.fileData.mtime);
            item->setIcon(0, iconProvider.icon(pathInfo));
            item->setText(0, fileName);
-           item->setText(1, result.path);
+           item->setText(1, result.fileData.absPath);
            item->setText(2, dt.toString(Qt::ISODate));
        }
 
        //TODO: this must be user defined or done more intelligently
        if(this->pdfSearchResults.size() < 300)
        {
-           if(result.path.endsWith(".pdf"))
+           if(result.fileData.absPath.endsWith(".pdf"))
            {
                this->pdfSearchResults.append(result);
            }
        }
-       lastpath = result.path;
+       lastpath = result.fileData.absPath;
    }
    ui->treeResultsList->resizeColumnToContents(0);
    ui->treeResultsList->resizeColumnToContents(1);

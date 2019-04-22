@@ -1,6 +1,7 @@
 #ifndef FILEDATA_H
 #define FILEDATA_H
 #include <QString>
+
 class FileData
 {
 public:

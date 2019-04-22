@@ -5,8 +5,6 @@
 
 class CommandSearch : public Command
 {
-private:
-    SqliteSearch searcher;
 public:
     using Command::Command;
 

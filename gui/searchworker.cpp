@@ -1,9 +1,10 @@
-#include "searchworker.h"
 
 #include <QRegularExpression>
 #include <QDebug>
 #include <QSqlError>
 #include <QStack>
+#include "searchworker.h"
+#include "../shared/sqlitesearch.h"
 SearchWorker::SearchWorker()
 {
 
@@ -167,50 +168,8 @@ bool SearchWorker::checkParanthesis(QString expression)
 
 void SearchWorker::search(const QString &query)
 {
-    QSqlQuery dbquery(db);
-    QVector<SearchResult> results;
-    QString whereSql;
-    try
-    {
-        whereSql = makeSql(tokenize(query));
-    }
-    catch(const std::exception &e)
-    {
-      emit searchError(e.what());
-      return;
-    }
+    SqliteSearch searcher(db);
+    emit searchResultsReady(searcher.search(query));
 
-    QString prep;
-    //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
-    if(whereSql.contains("content."))
-    {
-        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
-    }
-    else
-    {
-        prep = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
-    }
-    dbquery.prepare(prep);
-    bool success = dbquery.exec();
-    if(!success)
-    {
-        qDebug() << "prepped: " << prep;
-        qDebug() << dbquery.lastError();
-        emit searchError(dbquery.lastError().text());
-        return;
-    }
-
-    while(dbquery.next())
-    {
-        SearchResult result;
-
-        result.path = dbquery.value("path").toString();
-        result.page = dbquery.value("page").toUInt();
-        result.mtime = dbquery.value("mtime").toUInt();
-        result.size = dbquery.value("filesize").toUInt();
-        result.filetype = dbquery.value("filetype").toChar();
-        results.append(result);
-    }
-    emit searchResultsReady(results);
 }
 

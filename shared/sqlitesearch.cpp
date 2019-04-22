@@ -1,18 +1,21 @@
 #include <QStack>
 #include <QRegularExpression>
-
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 #include "sqlitesearch.h"
+#include "qssgeneralexception.h"
 
-SqliteSearch::SqliteSearch()
+SqliteSearch::SqliteSearch(QSqlDatabase &db)
 {
-
+    this->db = &db;
 }
 
 QVector<SqliteSearch::Token> SqliteSearch::tokenize(QString expression)
 {
     if(!checkParanthesis(expression))
     {
-        throw std::invalid_argument("Invalid paranthesis");
+        throw QSSGeneralException("Invalid paranthesis");
     }
     //TODO: merge lonewords
     QVector<SqliteSearch::Token> result;
@@ -111,7 +114,7 @@ QString SqliteSearch::createSql(const SqliteSearch::Token &token)
         return " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH '" + value + "' )";
     }
 
-    throw std::invalid_argument("Unknown filter: " + key.toStdString());
+    throw QSSGeneralException("Unknown filter: " + key);
 }
 
 QString SqliteSearch::makeSql(const QVector<SqliteSearch::Token> &tokens)
@@ -124,9 +127,41 @@ QString SqliteSearch::makeSql(const QVector<SqliteSearch::Token> &tokens)
     return result;
 }
 
-void SqliteSearch::search(const QString &query)
+QVector<SearchResult> SqliteSearch::search(const QString &query)
 {
+    QVector<SearchResult> results;
+    QString whereSql = makeSql(tokenize(query));
+    QString prep;
+    //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
+    if(whereSql.contains("content."))
+    {
+        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
+    }
+    else
+    {
+        prep = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
+    }
+    QSqlQuery dbquery(*db);
+    dbquery.prepare(prep);
+    bool success = dbquery.exec();
+    if(!success)
+    {
+        qDebug() << "prepped: " << prep;
+        qDebug() << dbquery.lastError();
+        throw QSSGeneralException("SQL Error: " + dbquery.lastError().text());
+    }
 
+    while(dbquery.next())
+    {
+        SearchResult result;
+        result.fileData.absPath = dbquery.value("path").toString();
+        result.fileData.mtime = dbquery.value("mtime").toUInt();
+        result.fileData.size = dbquery.value("filesize").toUInt();
+        result.fileData.filetype = dbquery.value("filetype").toChar();
+        result.page = dbquery.value("page").toUInt();
+        results.append(result);
+    }
+    return results;
 }
 
 bool SqliteSearch::checkParanthesis(QString expression)

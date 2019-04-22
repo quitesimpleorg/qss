@@ -25,15 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    searchresult.cpp \
-    searchworker.cpp \
-    pdfworker.cpp \
-    pdfpreview.cpp \
-    clicklabel.cpp
+       searchworker.cpp \
+      pdfworker.cpp \
+      pdfpreview.cpp \
+      clicklabel.cpp
 
 HEADERS += \
         mainwindow.h \
-    searchresult.h \
     searchworker.h \
     pdfworker.h \
     pdfpreview.h \

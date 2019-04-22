@@ -26,7 +26,6 @@ SOURCES += \
     odtprocessor.cpp \
     utils.cpp \
     odsprocessor.cpp \
-    qssgeneralexception.cpp \
     commanddelete.cpp \
     commandupdate.cpp \
     filesaver.cpp \
@@ -48,7 +47,6 @@ HEADERS += \
     odtprocessor.h \
     utils.h \
     odsprocessor.h \
-    qssgeneralexception.h \
     commanddelete.h \
     commandupdate.h \
     filesaver.h \
