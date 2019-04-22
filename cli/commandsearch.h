@@ -8,10 +8,7 @@ class CommandSearch : public Command
 public:
     using Command::Command;
 
-    int handle(QStringList arguments) override
-    {
-        return 23;
-    }
+    int handle(QStringList arguments) override;
 
 };
 
