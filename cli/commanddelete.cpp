@@ -20,7 +20,7 @@ int CommandDelete::removeNonExistent(bool verbose, bool dryRun, QString pattern)
             if(!dryRun)
             {
                 QFileInfo fileInfo(file.absPath);
-                if(fileInfo.exists())
+                if(!fileInfo.exists())
                 {
                     if(this->dbService->deleteFile(file.absPath))
                     {
