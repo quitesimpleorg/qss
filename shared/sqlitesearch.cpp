@@ -113,8 +113,7 @@ QString SqliteSearch::createSql(const SqliteSearch::Token &token)
     {
         return " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH '" + value + "' )";
     }
-
-    throw QSSGeneralException("Unknown filter: " + key);
+    throw QSSGeneralException("Unknown token: " + key);
 }
 
 QString SqliteSearch::makeSql(const QVector<SqliteSearch::Token> &tokens)
@@ -156,7 +155,7 @@ QVector<SearchResult> SqliteSearch::search(const QString &query)
         SearchResult result;
         result.fileData.absPath = dbquery.value("path").toString();
         result.fileData.mtime = dbquery.value("mtime").toUInt();
-        result.fileData.size = dbquery.value("filesize").toUInt();
+        result.fileData.size = dbquery.value("size").toUInt();
         result.fileData.filetype = dbquery.value("filetype").toChar();
         result.page = dbquery.value("page").toUInt();
         results.append(result);
