@@ -13,6 +13,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "clicklabel.h"
+#include "../shared/sqlitesearch.h"
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -31,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addWidget(ui->lblSearchResults);
     ui->statusBar->addWidget(ui->pdfProcessBar);
     ui->pdfProcessBar->hide();
+    QSettings settings;
+    ui->comboScale->setCurrentText(settings.value("currentScale").toString());
 }
 
 void MainWindow::connectSignals()
@@ -51,6 +54,8 @@ void MainWindow::connectSignals()
 
 void MainWindow::comboScaleChanged(QString text)
 {
+    QSettings scaleSetting;
+    scaleSetting.setValue("currentScale", ui->comboScale->currentText());
     makePdfPreview();
 }
 bool MainWindow::pdfTabActive()
@@ -126,7 +131,7 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
 void MainWindow::lineEditReturnPressed()
 {
     QString q = ui->txtSearch->text();
-    if(!searchWorker->checkParanthesis(q))
+    if(!SqliteSearch::checkParanthesis(q))
     {
         ui->lblSearchResults->setText("Invalid paranthesis");
         return;

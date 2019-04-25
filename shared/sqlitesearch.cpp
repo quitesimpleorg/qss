@@ -2,6 +2,7 @@
 #include <QRegularExpression>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QStringList>
 #include <QDebug>
 #include "sqlitesearch.h"
 #include "qssgeneralexception.h"
@@ -79,85 +80,195 @@ QVector<SqliteSearch::Token> SqliteSearch::tokenize(QString expression)
 }
 
 
-
-QString SqliteSearch::createSql(const SqliteSearch::Token &token)
+QString SqliteSearch::fieldToColumn(QString field)
 {
+    if(field == "mtime" || field == "file.mtime")
+    {
+        return "file.mtime";
+    }
+    else if(field == "page" || field == "content.page")
+    {
+        return "content.page";
+    }
+    else if(field == "path" || field == "file.path")
+    {
+        return "file.path";
+    }
+    else if(field == "size" || field == "file.size")
+    {
+        return "file.size";
+    }
+    return "";
+}
+
+
+QString SqliteSearch::createSortSql(const SqliteSearch::Token &token)
+{
+    //sort:(mtime desc, page asc)
+    if(token.key == "sort")
+    {
+        QString sortsql = " ORDER BY ";
+        QStringList splitted_inner = token.value.split(",");
+        for(int i = 0; i < splitted_inner.length(); i++)
+        {
+            QStringList splitted = splitted_inner[i].split(" ");
+            if(splitted.length() == 2)
+            {
+                QString field = splitted[0];
+                QString order = splitted[1];
+                if(order.compare("asc", Qt::CaseInsensitive))
+                {
+                    order = "ASC";
+                }
+                else if(order.compare("desc", Qt::CaseInsensitive))
+                {
+                    order = "DESC";
+                }
+                else
+                {
+                    throw QSSGeneralException("Unknown order specifier: " + order);
+                }
+
+                field = fieldToColumn(field);
+                if(field == "")
+                {
+                    throw QSSGeneralException("Unknown field:" + field);
+                }
+
+                sortsql += field + " " + order;
+                if(splitted_inner.length() - i > 1)
+                {
+                    sortsql += ", ";
+                }
+            }
+            else if(splitted.length() == 1)
+            {
+                sortsql +=  splitted[0] + " ASC ";
+            }
+            else
+            {
+                throw QSSGeneralException("sort specifier must have format [field] (asc|desc)");
+            }
+
+
+        }
+        return sortsql;
+    }
+    return "";
+}
+
+QPair<QString, QVector<QString>> SqliteSearch::createSql(const SqliteSearch::Token &token)
+{
+    QPair<QString, QVector<QString>> result;
+
     QString key = token.key;
     QString value = token.value;
     value = value.replace("'", "\\'");
     if(key == "AND" || key == "OR" || key == "(" || key == ")")
     {
-        return " " + key + " ";
+        return { " " + key + " ", QVector<QString>() };
     }
     if(key == "!")
     {
-        return " NOT ";
+        return { " NOT ", QVector<QString>() };
     }
     if(key == "path.starts")
     {
-        return " file.path LIKE '" + value + "%' ";
+        return { " file.path LIKE ? || '%' ", { value } };
     }
     if(key == "path.ends")
     {
-        return " file.path LIKE '%" + value + "' ";
+        return { " file.path LIKE '%' || ? ", { value } };
     }
     if(key == "path.contains" || key == "inpath")
     {
-        return " file.path LIKE '%" + value + "%' ";
+        return { " file.path LIKE '%' || ? || '%' ", { value } } ;
     }
     if(key == "page")
     {
-        return " content.page = " + value;
+        return { " content.page = ?", { value } };
     }
     if(key == "contains" || key == "c")
     {
-        return " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH '" + value + "' )";
+        return { " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH ?) " , { value } };
     }
     throw QSSGeneralException("Unknown token: " + key);
 }
 
-QString SqliteSearch::makeSql(const QVector<SqliteSearch::Token> &tokens)
+QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
 {
-    QString result;
+    QString whereSql;
+    QString sortSql;
+    QString limitSql;
+    QVector<QString> bindValues;
+    bool isContentSearch = false;
     for(const Token &c : tokens)
     {
-        result += createSql(c);
+        if(c.key == "sort")
+        {
+            if(sortSql != "")
+            {
+                throw QSSGeneralException("Invalid input: Two seperate sort statements are invalid");
+            }
+            sortSql = createSortSql(c);
+        }
+        else
+        {
+            if(c.key == "c" || c.key == "contains")
+            {
+                isContentSearch = true;
+            }
+            auto sql = createSql(c);
+            whereSql += sql.first;
+            bindValues.append(sql.second);
+        }
     }
-    return result;
+
+    QString prepSql;
+    if(isContentSearch)
+    {
+        prepSql = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " " + sortSql;
+    }
+    else
+    {
+        prepSql = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE  1=1 AND " + whereSql + " " + sortSql;
+    }
+
+    QSqlQuery dbquery(*db);
+    dbquery.prepare(prepSql);
+
+    for(const QString &value : bindValues)
+    {
+        if(value != "")
+        {
+            dbquery.addBindValue(value);
+        }
+    }
+   return dbquery;
 }
+
+
 
 QVector<SearchResult> SqliteSearch::search(const QString &query)
 {
     QVector<SearchResult> results;
-    QString whereSql = makeSql(tokenize(query));
-    QString prep;
-    //TODO: hack, as we don't wanna look into content and get redundant results, when we don't even care about content
-    if(whereSql.contains("content."))
-    {
-        prep = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " ORDER By file.mtime DESC, content.page ASC";
-    }
-    else
-    {
-        prep = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE " + whereSql + " ORDER by file.mtime DESC";
-    }
-    QSqlQuery dbquery(*db);
-    dbquery.prepare(prep);
-    bool success = dbquery.exec();
+    QSqlQuery dbQuery = makeSqlQuery(tokenize(query));
+    bool success = dbQuery.exec();
     if(!success)
     {
-        qDebug() << "prepped: " << prep;
-        qDebug() << dbquery.lastError();
-        throw QSSGeneralException("SQL Error: " + dbquery.lastError().text());
+
+        qDebug() << dbQuery.lastError();
+        throw QSSGeneralException("SQL Error: " + dbQuery.lastError().text());
     }
 
-    while(dbquery.next())
+    while(dbQuery.next())
     {
         SearchResult result;
-        result.fileData.absPath = dbquery.value("path").toString();
-        result.fileData.mtime = dbquery.value("mtime").toUInt();
-        result.fileData.size = dbquery.value("size").toUInt();
-        result.fileData.filetype = dbquery.value("filetype").toChar();
-        result.page = dbquery.value("page").toUInt();
+        result.fileData.absPath = dbQuery.value("path").toString();
+        result.fileData.mtime = dbQuery.value("mtime").toUInt();
+        result.fileData.size = dbQuery.value("size").toUInt();
+        result.fileData.filetype = dbQuery.value("filetype").toChar();
+        result.page = dbQuery.value("page").toUInt();
         results.append(result);
     }
     return results;
