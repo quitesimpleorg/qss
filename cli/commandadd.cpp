@@ -57,9 +57,11 @@ int CommandAdd::handle(QStringList arguments)
     }
 
     FileSaver saver(*this->dbService);
-    if(!saver.addFiles(files.toVector(), keepGoing, verbose))
+    int numFilesCount = files.size();
+    int processedFilesCount = saver.addFiles(files.toVector(), keepGoing, verbose);
+    if(processedFilesCount != numFilesCount )
     {
-        Logger::error() << "Errors occured while trying to add files to the database" << endl;
+        Logger::error() << "Errors occured while trying to add files to the database. Processed " << processedFilesCount << "out of" << numFilesCount << "files" << endl;
         return 1;
     }
 

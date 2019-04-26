@@ -97,11 +97,13 @@ int CommandUpdate::handle(QStringList arguments)
         }
 
 
-        if(!saver.updateFiles(filePathsToUpdate, keepGoing, verbose))
+        int updatedFilesCount = saver.updateFiles(filePathsToUpdate, keepGoing, verbose);
+        int shouldHaveUpdatedCount = filePathsToUpdate.size();
+        if(updatedFilesCount != shouldHaveUpdatedCount)
         {
             if(!keepGoing)
             {
-                Logger::error() << "Failed to update all files selected for updating" << endl;
+                Logger::error() << "Failed to update all files selected for updating. Updated" << updatedFilesCount << "out of" << shouldHaveUpdatedCount << "selected for upating" << endl;
                 return 1;
             }
         }

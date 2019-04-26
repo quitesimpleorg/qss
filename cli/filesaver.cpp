@@ -59,20 +59,20 @@ SaveFileResult FileSaver::updateFile(QString path)
     return saveFile(info);
 }
 
-bool FileSaver::addFiles(const QVector<QString> paths, bool keepGoing, bool verbose)
+int FileSaver::addFiles(const QVector<QString> paths, bool keepGoing, bool verbose)
 {
     return processFiles(paths, std::bind(&FileSaver::addFile, this, std::placeholders::_1), keepGoing, verbose);
 }
 
-bool FileSaver::updateFiles(const QVector<QString> paths, bool keepGoing, bool verbose)
+int FileSaver::updateFiles(const QVector<QString> paths, bool keepGoing, bool verbose)
 {
     return processFiles(paths, std::bind(&FileSaver::updateFile, this, std::placeholders::_1), keepGoing, verbose);
 }
 
-bool FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFileResult(QString path)> saverFunc, bool keepGoing, bool verbose)
+int FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFileResult(QString path)> saverFunc, bool keepGoing, bool verbose)
 {
     std::atomic<bool> terminate { false };
-    std::atomic<bool> hasError { false };
+    std::atomic<int> errorsCount { 0 };
     QtConcurrent::blockingMap(paths, [&](const QString &path) {
         if(terminate.load())
         {
@@ -85,12 +85,11 @@ bool FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFil
         SaveFileResult result = saverFunc(path);
         if(result == DBFAIL || result == PROCESSFAIL)
         {
-            hasError = true;
+            errorsCount++;
             Logger::error() << "Failed to process " << path << endl;
             if(!keepGoing)
             {
-                terminate = true;
-
+               terminate = true;
             }
         }
         if(verbose)
@@ -105,7 +104,7 @@ bool FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFil
             }
         }
      });
-    return ! hasError.load();
+    return paths.size() - errorsCount.load();
 }
 
 
