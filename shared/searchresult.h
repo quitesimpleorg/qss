@@ -6,7 +6,7 @@ class SearchResult
 {
 public:
     FileData fileData;
-    unsigned int page;
+    QVector<unsigned int> pages;
 
 };
 

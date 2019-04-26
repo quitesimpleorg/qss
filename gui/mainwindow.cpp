@@ -105,10 +105,10 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
     label->setPixmap(QPixmap::fromImage(preview.previewImage));
     ui->scrollAreaWidgetContents->layout()->addWidget(label);
     ui->pdfProcessBar->setValue(++processedPdfPreviews);
+
     connect(label, &ClickLabel::clicked, [=]() {
         QSettings settings;
         QString command = settings.value("pdfviewer").toString();
-        qDebug() << command;
         if(command != "" && command.contains("%p") && command.contains("%f"))
         {
             command = command.replace("%f", preview.documentPath);
@@ -146,21 +146,17 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
    this->pdfSearchResults.clear();
    ui->treeResultsList->clear();
    ui->lblSearchResults->setText("Results: " + QString::number(results.size()));
-   QString lastpath = "";
    for(const SearchResult &result : results)
    {
-      if(lastpath != result.fileData.absPath)
-       {
-           QFileInfo pathInfo(result.fileData.absPath);
-           QString fileName =pathInfo.fileName();
-           QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeResultsList);
+       QFileInfo pathInfo(result.fileData.absPath);
+       QString fileName =pathInfo.fileName();
+       QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeResultsList);
 
-           QDateTime dt = QDateTime::fromSecsSinceEpoch(result.fileData.mtime);
-           item->setIcon(0, iconProvider.icon(pathInfo));
-           item->setText(0, fileName);
-           item->setText(1, result.fileData.absPath);
-           item->setText(2, dt.toString(Qt::ISODate));
-       }
+       QDateTime dt = QDateTime::fromSecsSinceEpoch(result.fileData.mtime);
+       item->setIcon(0, iconProvider.icon(pathInfo));
+       item->setText(0, fileName);
+       item->setText(1, result.fileData.absPath);
+       item->setText(2, dt.toString(Qt::ISODate));
 
        //TODO: this must be user defined or done more intelligently
        if(this->pdfSearchResults.size() < 300)
@@ -170,7 +166,6 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
                this->pdfSearchResults.append(result);
            }
        }
-       lastpath = result.fileData.absPath;
    }
    ui->treeResultsList->resizeColumnToContents(0);
    ui->treeResultsList->resizeColumnToContents(1);

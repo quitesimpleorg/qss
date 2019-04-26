@@ -1,4 +1,3 @@
-Remove redundant searchresult info (redundant filedata (paths etc:))
 pdfworker: use qtconcurrent
 Consider injecting Logger (default stdout/stderr) to classes instead of using Logger::info()/Logger::error()::
 sync/share GUI and CLI data-structures. Better to share codebase in general

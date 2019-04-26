@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <QDebug>
+#include <QScopedPointer>
 #include "pdfworker.h"
 
 PdfWorker::PdfWorker()
@@ -42,17 +43,21 @@ void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor
         {
             continue;
         }
-        int p = (int)sr.page - 1;
-        if(p < 0)
-            p = 0;
-        Poppler::Page *pdfpage = doc->page(p);
-        QImage image = pdfpage->renderToImage(QGuiApplication::primaryScreen()->physicalDotsPerInchX() * scalefactor, QGuiApplication::primaryScreen()->physicalDotsPerInchY() *scalefactor);
+        for(unsigned int page : sr.pages)
+        {
+            int p = (int)page - 1;
+            if(p < 0)
+                p = 0;
+            Poppler::Page *pdfPage = doc->page(p);
+            QImage image = pdfPage->renderToImage(QGuiApplication::primaryScreen()->physicalDotsPerInchX() * scalefactor, QGuiApplication::primaryScreen()->physicalDotsPerInchY() *scalefactor);
 
-        PdfPreview preview;
-        preview.previewImage = image;
-        preview.documentPath = sr.fileData.absPath;
-        preview.page = sr.page;
-        emit previewReady(preview);
+            PdfPreview preview;
+            preview.previewImage = image;
+            preview.documentPath = sr.fileData.absPath;
+            preview.page = page;
+            emit previewReady(preview);
+        }
+
     }
     isFreeMutex.lock();
     isFree.wakeOne();

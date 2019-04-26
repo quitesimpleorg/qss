@@ -227,11 +227,11 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
     QString prepSql;
     if(isContentSearch)
     {
-        prepSql = "SELECT file.path AS path, content.page AS page, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " " + sortSql;
+        prepSql = "SELECT file.path AS path, group_concat(content.page) AS pages, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " " + sortSql + " GROUP BY file.path";
     }
     else
     {
-        prepSql = "SELECT file.path AS path, 0 as page,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE  1=1 AND " + whereSql + " " + sortSql;
+        prepSql = "SELECT file.path AS path, '0' as pages,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE  1=1 AND " + whereSql + " " + sortSql;
     }
 
     QSqlQuery dbquery(*db);
@@ -268,7 +268,15 @@ QVector<SearchResult> SqliteSearch::search(const QString &query)
         result.fileData.mtime = dbQuery.value("mtime").toUInt();
         result.fileData.size = dbQuery.value("size").toUInt();
         result.fileData.filetype = dbQuery.value("filetype").toChar();
-        result.page = dbQuery.value("page").toUInt();
+        QString pages = dbQuery.value("pages").toString();
+        QStringList pagesList = pages.split(",");
+        for(QString &page : pagesList)
+        {
+            if(page != "")
+            {
+                result.pages.append(page.toUInt());
+            }
+        }
         results.append(result);
     }
     return results;
