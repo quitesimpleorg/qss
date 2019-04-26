@@ -198,8 +198,8 @@ QPair<QString, QVector<QString>> SqliteSearch::createSql(const SqliteSearch::Tok
 QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
 {
     QString whereSql;
-    QString sortSql;
     QString limitSql;
+    QString sortSql;
     QVector<QString> bindValues;
     bool isContentSearch = false;
     for(const Token &c : tokens)
@@ -227,10 +227,18 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
     QString prepSql;
     if(isContentSearch)
     {
+        if(sortSql.isEmpty())
+        {
+            sortSql =  "ORDER BY file.mtime DESC, content.page ASC";
+        }
         prepSql = "SELECT file.path AS path, group_concat(content.page) AS pages, file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " + whereSql + " " + sortSql + " GROUP BY file.path";
     }
     else
     {
+        if(sortSql.isEmpty())
+        {
+            sortSql =  "ORDER BY file.mtime DESC";
+        }
         prepSql = "SELECT file.path AS path, '0' as pages,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE  1=1 AND " + whereSql + " " + sortSql;
     }
 
