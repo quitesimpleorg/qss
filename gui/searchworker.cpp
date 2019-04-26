@@ -5,6 +5,7 @@
 #include <QStack>
 #include "searchworker.h"
 #include "../shared/sqlitesearch.h"
+#include "qssgeneralexception.h"
 SearchWorker::SearchWorker()
 {
 
@@ -22,6 +23,15 @@ SearchWorker::SearchWorker(const QString &dbpath)
 void SearchWorker::search(const QString &query)
 {
     SqliteSearch searcher(db);
-    emit searchResultsReady(searcher.search(query));
+    try
+    {
+        auto result = searcher.search(query);
+        emit searchResultsReady(searcher.search(query));
+    }
+    catch(QSSGeneralException &e)
+    {
+        emit searchError(e.message);
+    }
+
 }
 
