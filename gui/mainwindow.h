@@ -6,7 +6,8 @@
 #include <QTreeWidgetItem>
 #include <QFileIconProvider>
 #include <QKeyEvent>
-#include "searchworker.h"
+#include <QFutureWatcher>
+#include <QSqlDatabase>
 #include "pdfworker.h"
 namespace Ui {
 class MainWindow;
@@ -26,7 +27,9 @@ private:
     Ui::MainWindow *ui;
     QFileIconProvider iconProvider;
     bool pdfDirty;
-    SearchWorker *searchWorker;
+    QSqlDatabase db;
+    QFuture<QVector<SearchResult>> searchFuture;
+    QFutureWatcher<QVector<SearchResult>> searchWatcher;
     PdfWorker *pdfWorker;
     void add(QString path, unsigned int page);
     QThread searchThread;

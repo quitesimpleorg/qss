@@ -10,6 +10,7 @@
 #include <QDateTime>
 #include <QProcess>
 #include <QComboBox>
+#include <QtConcurrent/QtConcurrent>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "clicklabel.h"
@@ -20,9 +21,15 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    searchWorker = new SearchWorker(QSettings().value("dbpath").toString());
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(QSettings().value("dbpath").toString());
+    if(!db.open())
+    {
+        qDebug() << "failed to open database";
+        throw std::runtime_error("Failed to open database");
+    }
+
     pdfWorker = new PdfWorker();
-     searchWorker->moveToThread(&searchThread);
     pdfWorker->moveToThread(&pdfWorkerThread);
     connectSignals();
     searchThread.start();
@@ -39,10 +46,13 @@ MainWindow::MainWindow(QWidget *parent) :
 void MainWindow::connectSignals()
 {
     connect(ui->txtSearch, &QLineEdit::returnPressed, this, &MainWindow::lineEditReturnPressed);
-    connect(this, &MainWindow::beginSearch, searchWorker, &SearchWorker::search);
-    connect(searchWorker, &SearchWorker::searchResultsReady, this, &MainWindow::handleSearchResults);
-    connect(searchWorker, &SearchWorker::searchCancelled, this, &MainWindow::handleCancelledSearch);
-    connect(searchWorker, &SearchWorker::searchError, this, &MainWindow::handleSearchError);
+   // connect(this, &MainWindow::beginSearch, searchWorker, &SearchWorker::search);
+    connect(&searchWatcher, &QFutureWatcher<SearchResult>::finished, this, [&]{
+        auto results = searchWatcher.future().result();
+        handleSearchResults(results);
+    });
+   // connect(searchWorker, &SearchWorker::searchCancelled, this, &MainWindow::handleCancelledSearch);
+  //  connect(searchWorker, &SearchWorker::searchError, this, &MainWindow::handleSearchError);
     connect(ui->treeResultsList, &QTreeWidget::itemActivated, this, &MainWindow::treeSearchItemActivated);
     connect(ui->treeResultsList, &QTreeWidget::customContextMenuRequested, this, &MainWindow::showSearchResultsContextMenu);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
@@ -138,7 +148,12 @@ void MainWindow::lineEditReturnPressed()
     }
     //TODO: validate q;
     ui->lblSearchResults->setText("Searching...");
-    emit beginSearch(q);
+    QFuture<QVector<SearchResult>> searchFuture = QtConcurrent::run([&, q]() {
+       SqliteSearch searcher(db);
+        return searcher.search(q);
+    });
+    searchWatcher.setFuture(searchFuture);
+
 }
 
 void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
