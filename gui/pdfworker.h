@@ -17,7 +17,7 @@ class PdfWorker : public QObject
 {
     Q_OBJECT
 public:
-    QFuture<PdfPreview> generatePreviews(QVector<SearchResult> paths, double scalefactor);
+    QFuture<PdfPreview> generatePreviews(const QVector<SearchResult> paths, double scalefactor);
 };
 
 #endif // PDFWORKER_H

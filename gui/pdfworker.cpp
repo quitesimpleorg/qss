@@ -74,11 +74,11 @@ struct Renderer
 
 
 
-QFuture<PdfPreview> PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor)
+QFuture<PdfPreview> PdfWorker::generatePreviews(const QVector<SearchResult> paths, double scalefactor)
 {
     QVector<PdfPreview> previews;
 
-    for(SearchResult &sr : paths)
+    for(const SearchResult &sr : paths)
     {
         for(int page : sr.pages)
         {
