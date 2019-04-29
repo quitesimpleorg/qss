@@ -17,34 +17,34 @@ int CommandDelete::removeNonExistent(bool verbose, bool dryRun, QString pattern)
     {
         for(FileData &file : files)
         {
-            if(!dryRun)
-            {
                 QFileInfo fileInfo(file.absPath);
                 if(!fileInfo.exists())
                 {
-                    if(this->dbService->deleteFile(file.absPath))
+                    if(!dryRun)
                     {
-                        if(verbose)
+                        if(this->dbService->deleteFile(file.absPath))
                         {
-                            Logger::info() << "Deleted" << file.absPath << endl;
+                            if(verbose)
+                            {
+                                Logger::info() << "Deleted" << file.absPath << endl;
+                            }
+                        }
+                        else
+                        {
+                            Logger::error()<< "Failed to delete:" << file.absPath << ", exiting." << endl
+                                             ;
+                            return 1;
                         }
                     }
                     else
                     {
-                        Logger::error()<< "Failed to delete:" << file.absPath << ", exiting." << endl
-                                         ;
-                        return 1;
+                        Logger::info() << "Would delete " << file.absPath << endl;
                     }
                 }
-            }
-            else
-            {
-                Logger::info() << "Would delete " << file.absPath << endl;
-            }
-
         }
+
         offset += limit;
-        processedRows = this->dbService->getFiles(files, pattern, 0, limit);
+        processedRows = this->dbService->getFiles(files, pattern, offset, limit);
     }
     return 0;
  }
