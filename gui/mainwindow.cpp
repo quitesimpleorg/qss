@@ -15,6 +15,7 @@
 #include "ui_mainwindow.h"
 #include "clicklabel.h"
 #include "../shared/sqlitesearch.h"
+#include "../shared/qssgeneralexception.h"
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -45,8 +46,16 @@ void MainWindow::connectSignals()
     connect(ui->txtSearch, &QLineEdit::returnPressed, this, &MainWindow::lineEditReturnPressed);
    // connect(this, &MainWindow::beginSearch, searchWorker, &SearchWorker::search);
     connect(&searchWatcher, &QFutureWatcher<SearchResult>::finished, this, [&]{
-        auto results = searchWatcher.future().result();
-        handleSearchResults(results);
+        try
+        {
+            auto results = searchWatcher.future().result();
+            handleSearchResults(results);
+        }
+        catch(QSSGeneralException &e)
+        {
+            handleSearchError(e.message);
+        }
+
     });
 
     connect(&pdfWorkerWatcher, &QFutureWatcher<PdfPreview>::resultReadyAt, this, [&](int index) {
@@ -149,7 +158,7 @@ void MainWindow::lineEditReturnPressed()
     //TODO: validate q;
     ui->lblSearchResults->setText("Searching...");
     QFuture<QVector<SearchResult>> searchFuture = QtConcurrent::run([&, q]() {
-       SqliteSearch searcher(db);
+        SqliteSearch searcher(db);
         return searcher.search(q);
     });
     searchWatcher.setFuture(searchFuture);
