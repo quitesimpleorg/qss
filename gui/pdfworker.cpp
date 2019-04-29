@@ -3,77 +3,89 @@
 #include <QScreen>
 #include <QDebug>
 #include <QScopedPointer>
+#include <QMutexLocker>
+#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentMap>
 #include "pdfworker.h"
 
-PdfWorker::PdfWorker()
+
+static QMutex cacheMutex;
+struct Renderer
 {
 
-}
-
-Poppler::Document * PdfWorker::document(QString path)
-{
-    if(this->documentcache.contains(path))
-        return this->documentcache.value(path);
-
-    Poppler::Document *result = Poppler::Document::load(path);
-    if(result == nullptr)
+    typedef PdfPreview result_type;
+    double scaleX;
+    double scaleY;
+    QHash<QString, Poppler::Document *> documentcache;
+    Renderer(double scaleX, double scaleY)
     {
-        return nullptr;
+        this->scaleX = scaleX;
+        this->scaleY = scaleY;
     }
-    result->setRenderHint(Poppler::Document::TextAntialiasing);
-    this->documentcache.insert(path, result);
-    return result;
-}
-void PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor)
-{
-    this->cancelCurrent = false;
-    this->generating = true;
-    for(SearchResult &sr : paths)
+    Poppler::Document *document(QString path)
     {
-        if(this->cancelCurrent.load())
+        if(documentcache.contains(path))
+            return documentcache.value(path);
+
+        Poppler::Document *result = Poppler::Document::load(path);
+        if(result == nullptr)
         {
-            break;
+            return nullptr;
         }
-        Poppler::Document *doc = document(sr.fileData.absPath);
+        result->setRenderHint(Poppler::Document::TextAntialiasing);
+        QMutexLocker locker(&cacheMutex);
+        documentcache.insert(path, result);
+        return result;
+    }
+
+
+
+    PdfPreview operator()(const PdfPreview &preview)
+    {
+        Poppler::Document *doc = document(preview.documentPath);
         if(doc == nullptr)
         {
-            continue;
+            return preview;
         }
         if(doc->isLocked())
         {
-            continue;
+            return preview;
         }
-        for(unsigned int page : sr.pages)
+        int p = (int)preview.page - 1;
+        if(p < 0)
         {
-            int p = (int)page - 1;
-            if(p < 0)
-                p = 0;
-            Poppler::Page *pdfPage = doc->page(p);
-            QImage image = pdfPage->renderToImage(QGuiApplication::primaryScreen()->physicalDotsPerInchX() * scalefactor, QGuiApplication::primaryScreen()->physicalDotsPerInchY() *scalefactor);
-
-            PdfPreview preview;
-            preview.previewImage = image;
-            preview.documentPath = sr.fileData.absPath;
-            preview.page = page;
-            emit previewReady(preview);
+            p = 0;
         }
-
+        Poppler::Page *pdfPage = doc->page(p);
+        PdfPreview result = preview;
+        result.previewImage  = pdfPage->renderToImage(scaleX, scaleY);
+        return result;
     }
-    isFreeMutex.lock();
-    isFree.wakeOne();
-    isFreeMutex.unlock();
-    generating = false;
-    emit previewsFinished();
-}
+};
 
-void PdfWorker::cancelAndWait()
+
+
+QFuture<PdfPreview> PdfWorker::generatePreviews(QVector<SearchResult> paths, double scalefactor)
 {
-    if(this->generating.load())
-    {
-        this->cancelCurrent = true;
+    QVector<PdfPreview> previews;
 
-        isFreeMutex.lock();
-        isFree.wait(&isFreeMutex);
-        isFreeMutex.unlock();
+    for(SearchResult &sr : paths)
+    {
+        for(int page : sr.pages)
+        {
+            PdfPreview p;
+            p.documentPath = sr.fileData.absPath;
+            p.page = page;
+            previews.append(p);
+        }
     }
+
+
+
+    double scaleX = QGuiApplication::primaryScreen()->physicalDotsPerInchX() * scalefactor;
+    double scaleY = QGuiApplication::primaryScreen()->physicalDotsPerInchY() * scalefactor;
+
+
+    return QtConcurrent::mapped(previews, Renderer(scaleX, scaleY));
 }
+

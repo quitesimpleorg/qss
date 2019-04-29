@@ -28,9 +28,6 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "failed to open database";
         throw std::runtime_error("Failed to open database");
     }
-
-    pdfWorker = new PdfWorker();
-    pdfWorker->moveToThread(&pdfWorkerThread);
     connectSignals();
     searchThread.start();
     ui->treeResultsList->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
@@ -51,14 +48,19 @@ void MainWindow::connectSignals()
         auto results = searchWatcher.future().result();
         handleSearchResults(results);
     });
+
+    connect(&pdfWorkerWatcher, &QFutureWatcher<PdfPreview>::resultReadyAt, this, [&](int index) {
+        pdfPreviewReceived(pdfWorkerWatcher.resultAt(index));
+    });
+
+    connect(&pdfWorkerWatcher, &QFutureWatcher<PdfPreview>::progressValueChanged, ui->pdfProcessBar, &QProgressBar::setValue);
+
+
    // connect(searchWorker, &SearchWorker::searchCancelled, this, &MainWindow::handleCancelledSearch);
   //  connect(searchWorker, &SearchWorker::searchError, this, &MainWindow::handleSearchError);
     connect(ui->treeResultsList, &QTreeWidget::itemActivated, this, &MainWindow::treeSearchItemActivated);
     connect(ui->treeResultsList, &QTreeWidget::customContextMenuRequested, this, &MainWindow::showSearchResultsContextMenu);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
-    connect(this, &MainWindow::startPdfPreviewGeneration, pdfWorker, &PdfWorker::generatePreviews);
-    connect(pdfWorker, &PdfWorker::previewReady, this, &MainWindow::pdfPreviewReceived);
-    connect(pdfWorker, &PdfWorker::previewsFinished, [&] { this->pdfDirty = false; });
     connect(ui->comboScale, qOverload<const QString &>(&QComboBox::currentIndexChanged), this, &MainWindow::comboScaleChanged);
 }
 
@@ -114,8 +116,6 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
     ClickLabel *label = new ClickLabel();
     label->setPixmap(QPixmap::fromImage(preview.previewImage));
     ui->scrollAreaWidgetContents->layout()->addWidget(label);
-    ui->pdfProcessBar->setValue(++processedPdfPreviews);
-
     connect(label, &ClickLabel::clicked, [=]() {
         QSettings settings;
         QString command = settings.value("pdfviewer").toString();
@@ -194,11 +194,11 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
 
 void MainWindow::makePdfPreview()
 {
-    if(!pdfWorkerThread.isRunning())
-        pdfWorkerThread.start();
 
-   pdfWorker->cancelAndWait();
-   QCoreApplication::processEvents(); //Process not processed images
+   this->pdfWorkerWatcher.cancel();
+   this->pdfWorkerWatcher.waitForFinished();
+
+   QCoreApplication::processEvents(); //Maybe not necessary anymore, depends on whether it's possible that a slot is still to be fired.
    qDeleteAll(ui->scrollAreaWidgetContents->children());
 
    ui->scrollAreaWidgetContents->setLayout(new QHBoxLayout());
@@ -206,8 +206,11 @@ void MainWindow::makePdfPreview()
    processedPdfPreviews = 0;
    QString scaleText = ui->comboScale->currentText();
    scaleText.chop(1);
+   PdfWorker worker;
+   this->pdfWorkerWatcher.setFuture(worker.generatePreviews(this->pdfSearchResults, scaleText.toInt() / 100.));
+   ui->pdfProcessBar->setMaximum(this->pdfWorkerWatcher.progressMaximum());
+   ui->pdfProcessBar->setMinimum(this->pdfWorkerWatcher.progressMinimum());
 
-   emit startPdfPreviewGeneration(this->pdfSearchResults, scaleText.toInt() / 100.);
 }
 
 

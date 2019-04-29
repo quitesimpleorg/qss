@@ -30,7 +30,7 @@ private:
     QSqlDatabase db;
     QFuture<QVector<SearchResult>> searchFuture;
     QFutureWatcher<QVector<SearchResult>> searchWatcher;
-    PdfWorker *pdfWorker;
+    QFutureWatcher<PdfPreview> pdfWorkerWatcher;
     void add(QString path, unsigned int page);
     QThread searchThread;
     QThread pdfWorkerThread;

@@ -50,7 +50,6 @@ HEADERS += \
     commanddelete.h \
     commandupdate.h \
     filesaver.h \
-    filedata.h \
     databasefactory.h \
     sqlitedbservice.h \
     logger.h \
