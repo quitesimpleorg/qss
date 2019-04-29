@@ -21,7 +21,15 @@ struct Renderer
     {
         this->scaleX = scaleX;
         this->scaleY = scaleY;
+
     }
+
+    ~Renderer()
+    {
+        qDeleteAll(documentcache);
+    }
+
+
     Poppler::Document *document(QString path)
     {
         if(documentcache.contains(path))
@@ -30,6 +38,7 @@ struct Renderer
         Poppler::Document *result = Poppler::Document::load(path);
         if(result == nullptr)
         {
+            //TODO: some kind of user feedback would be nicec
             return nullptr;
         }
         result->setRenderHint(Poppler::Document::TextAntialiasing);
