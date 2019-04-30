@@ -1,4 +1,4 @@
-pdfworker: use qtconcurrent
+PdfPreview: Use some kind of paging instead of memory limit
 Consider injecting Logger (default stdout/stderr) to classes instead of using Logger::info()/Logger::error()::
 sync/share GUI and CLI data-structures. Better to share codebase in general
 - cli: update command, delete command, tagging
@@ -6,13 +6,11 @@ sync/share GUI and CLI data-structures. Better to share codebase in general
 - ability to set the WHERE condition (allow editing the SQL query)
 - Scale factors
 - Basic OCR in images (screenshots)
-- Abort running pdf preview generation when we search for something new
 - Index .ebup
 - Preview for: .txt, source code files, .ebup, images
 - Stats: Number of results found
 - PdfPreview: Files per file, or directory (so basically filter the 
 results)
-- PdfPreview: Remove arbitrary limit of 300 
 - Hide PdfPreview Tab if there are no pdfs in the results
 -Tagging: add an "addtag" utility, to assign tags to folder and files
 -gui: Search expclitly for tags, list by tags, remove tags, add tags
