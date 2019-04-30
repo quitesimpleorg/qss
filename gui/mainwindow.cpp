@@ -114,30 +114,33 @@ void MainWindow::tabChanged()
 
 void MainWindow::pdfPreviewReceived(PdfPreview preview)
 {
-    ClickLabel *label = new ClickLabel();
-    label->setPixmap(QPixmap::fromImage(preview.previewImage));
-    label->setToolTip(preview.documentPath);
-    ui->scrollAreaWidgetContents->layout()->addWidget(label);
-    connect(label, &ClickLabel::leftClick, [=]() {
-        QSettings settings;
-        QString command = settings.value("pdfviewer").toString();
-        if(command != "" && command.contains("%p") && command.contains("%f"))
-        {
-            command = command.replace("%f", preview.documentPath);
-            command = command.replace("%p", QString::number(preview.page));
-            QStringList splitted = command.split(" ");
-            if(splitted.size() > 1)
+    if(preview.hasPreviewImage())
+    {
+        ClickLabel *label = new ClickLabel();
+        label->setPixmap(QPixmap::fromImage(preview.previewImage));
+        label->setToolTip(preview.documentPath);
+        ui->scrollAreaWidgetContents->layout()->addWidget(label);
+        connect(label, &ClickLabel::leftClick, [=]() {
+            QSettings settings;
+            QString command = settings.value("pdfviewer").toString();
+            if(command != "" && command.contains("%p") && command.contains("%f"))
             {
-                QString cmd = splitted[0];
-                QStringList args = splitted.mid(1);
-                QProcess::startDetached(cmd, args);
+                command = command.replace("%f", preview.documentPath);
+                command = command.replace("%p", QString::number(preview.page));
+                QStringList splitted = command.split(" ");
+                if(splitted.size() > 1)
+                {
+                    QString cmd = splitted[0];
+                    QStringList args = splitted.mid(1);
+                    QProcess::startDetached(cmd, args);
+                }
             }
-        }
-        else
-        {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(preview.documentPath));
-        }
-    });
+            else
+            {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(preview.documentPath));
+            }
+        });
+    }
 }
 
 void MainWindow::lineEditReturnPressed()
@@ -174,14 +177,9 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
        item->setText(0, fileName);
        item->setText(1, result.fileData.absPath);
        item->setText(2, dt.toString(Qt::ISODate));
-
-       //TODO: this must be user defined or done more intelligently
-       if(this->pdfSearchResults.size() < 300)
+       if(result.fileData.absPath.endsWith(".pdf"))
        {
-           if(result.fileData.absPath.endsWith(".pdf"))
-           {
-               this->pdfSearchResults.append(result);
-           }
+           this->pdfSearchResults.append(result);
        }
    }
    ui->treeResultsList->resizeColumnToContents(0);

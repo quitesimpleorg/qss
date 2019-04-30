@@ -6,6 +6,7 @@
 #include <QMutexLocker>
 #include <QtConcurrent/QtConcurrent>
 #include <QtConcurrent/QtConcurrentMap>
+#include <atomic>
 #include "pdfworker.h"
 
 
@@ -17,11 +18,23 @@ struct Renderer
     double scaleX;
     double scaleY;
     QHash<QString, Poppler::Document *> documentcache;
-    Renderer(double scaleX, double scaleY)
+    qsizetype maxTotalPreviewImageMemUsage;
+    std::atomic<qsizetype> currentTotalPreviewImageMemUsage { 0 };
+
+    Renderer(double scaleX, double scaleY, qsizetype maxPreviewImageMemUsage)
     {
         this->scaleX = scaleX;
         this->scaleY = scaleY;
+        this->maxTotalPreviewImageMemUsage = maxPreviewImageMemUsage;
 
+    }
+
+    /*we need this one because std::atomic has none, but this is only a functor for
+    concurrentmap, thus, it's ok for it to be half-broken*/
+    Renderer(const Renderer &o)
+    {
+        this->scaleX = o.scaleX;
+        this->scaleY = o.scaleY;
     }
 
     ~Renderer()
@@ -38,7 +51,7 @@ struct Renderer
         Poppler::Document *result = Poppler::Document::load(path);
         if(result == nullptr)
         {
-            //TODO: some kind of user feedback would be nicec
+            //TODO: some kind of user feedback would be nice
             return nullptr;
         }
         result->setRenderHint(Poppler::Document::TextAntialiasing);
@@ -51,23 +64,28 @@ struct Renderer
 
     PdfPreview operator()(const PdfPreview &preview)
     {
-        Poppler::Document *doc = document(preview.documentPath);
-        if(doc == nullptr)
-        {
-            return preview;
-        }
-        if(doc->isLocked())
-        {
-            return preview;
-        }
-        int p = (int)preview.page - 1;
-        if(p < 0)
-        {
-            p = 0;
-        }
-        Poppler::Page *pdfPage = doc->page(p);
         PdfPreview result = preview;
-        result.previewImage  = pdfPage->renderToImage(scaleX, scaleY);
+        if(currentTotalPreviewImageMemUsage.load() < maxTotalPreviewImageMemUsage)
+        {
+            Poppler::Document *doc = document(preview.documentPath);
+            if(doc == nullptr)
+            {
+                return preview;
+            }
+            if(doc->isLocked())
+            {
+                return preview;
+            }
+            int p = (int)preview.page - 1;
+            if(p < 0)
+            {
+                p = 0;
+            }
+            Poppler::Page *pdfPage = doc->page(p);
+            QImage img = pdfPage->renderToImage(scaleX, scaleY);
+            result.previewImage = img;
+            currentTotalPreviewImageMemUsage += img.sizeInBytes();
+        }
         return result;
     }
 };
@@ -94,7 +112,9 @@ QFuture<PdfPreview> PdfWorker::generatePreviews(const QVector<SearchResult> path
     double scaleX = QGuiApplication::primaryScreen()->physicalDotsPerInchX() * scalefactor;
     double scaleY = QGuiApplication::primaryScreen()->physicalDotsPerInchY() * scalefactor;
 
+    QSettings setting;
+    qsizetype maxPreviewImageMemUsage = setting.value("maxpreviewimagesmemory", 1024 * 1024 * 1024).toLongLong();
 
-    return QtConcurrent::mapped(previews, Renderer(scaleX, scaleY));
+    return QtConcurrent::mapped(previews, Renderer(scaleX, scaleY, maxPreviewImageMemUsage));
 }
 
