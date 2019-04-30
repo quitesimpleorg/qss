@@ -8,7 +8,7 @@ class ClickLabel : public QLabel
 public:
     using QLabel::QLabel;
 signals:
-    void clicked();
+    void leftClick();
 protected:
         void mousePressEvent(QMouseEvent *event);
 
