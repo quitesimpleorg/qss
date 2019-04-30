@@ -21,7 +21,8 @@ int CommandAdd::handle(QStringList arguments)
 {
     QCommandLineParser parser;
     parser.addOptions({
-                          { { "c", "continue" }, "Continue adding files, don't exit on first error"},
+                          { { "c", "continue" }, "Continue adding files, don't exit on first error. If this option is not given, qss will exit asap, but it's possible that a few files will still be processed. "
+                            "Set -t 1 to avoid this behavior, but processing will be slower. "},
                           { { "a", "all" }, "On error, no files should be added, even already processed ones" },
                           { { "v", "verbose" }, "Print skipped and added files" },
                           { { "t", "threads" }, "Number of threads to use.", "threads" }

@@ -15,7 +15,8 @@ int CommandUpdate::handle(QStringList arguments)
                           { { "n", "dry-run"}, "Only print which files would be updated, don't actually update them"},
                           { "pattern", "Only consider to update files in the index matching the pattern, e. g. */.git/*.", "pattern" },
                           { { "d", "delete" }, "If a file does not exist anymore, delete it" },
-                          { { "c", "continue" }, "Continue adding files, don't exit on first error"},
+                          { { "c", "continue" }, "Continue adding files, don't exit on first error. If this option is not given, qss will exit asap, but it's possible that a few files will still be processed. "
+                            "Set -t 1 to avoid this behavior, but processing will be slower."},
                           { { "a", "all" }, "On error, no files should be updated, even already processed ones" },
                           { { "t", "threads" }, "Number of threads to use.", "threads" }
 
