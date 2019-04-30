@@ -72,7 +72,7 @@ int FileSaver::updateFiles(const QVector<QString> paths, bool keepGoing, bool ve
 int FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFileResult(QString path)> saverFunc, bool keepGoing, bool verbose)
 {
     std::atomic<bool> terminate { false };
-    std::atomic<int> errorsCount { 0 };
+    std::atomic<int> processedCount { 0 };
     QtConcurrent::blockingMap(paths, [&](const QString &path) {
         if(terminate.load())
         {
@@ -85,26 +85,30 @@ int FileSaver::processFiles(const QVector<QString> paths, std::function<SaveFile
         SaveFileResult result = saverFunc(path);
         if(result == DBFAIL || result == PROCESSFAIL)
         {
-            errorsCount++;
             Logger::error() << "Failed to process " << path << endl;
             if(!keepGoing)
             {
                terminate = true;
             }
         }
-        if(verbose)
+        else
         {
-            if(result == SKIPPED)
+            ++processedCount;
+            if(verbose)
             {
-                Logger::info() << "Skipped" << path << "as it already exists in the database" << endl;
-            }
-            else if(result == OK)
-            {
-                Logger::info() << "Added" << path << endl;
+                if(result == SKIPPED)
+                {
+                    Logger::info() << "Skipped" << path << "as it already exists in the database" << endl;
+                }
+                else if(result == OK)
+                {
+                    Logger::info() << "Added" << path << endl;
+                }
             }
         }
+
      });
-    return paths.size() - errorsCount.load();
+    return processedCount.load();
 }
 
 
