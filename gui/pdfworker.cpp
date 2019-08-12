@@ -26,15 +26,15 @@ struct Renderer
         this->scaleX = scaleX;
         this->scaleY = scaleY;
         this->maxTotalPreviewImageMemUsage = maxPreviewImageMemUsage;
-
     }
 
     /*we need this one because std::atomic has none, but this is only a functor for
     concurrentmap, thus, it's ok for it to be half-broken*/
-    Renderer(const Renderer &o)
+   Renderer(const Renderer &o)
     {
         this->scaleX = o.scaleX;
         this->scaleY = o.scaleY;
+        this->maxTotalPreviewImageMemUsage = o.maxTotalPreviewImageMemUsage;
     }
 
     ~Renderer()
@@ -114,7 +114,6 @@ QFuture<PdfPreview> PdfWorker::generatePreviews(const QVector<SearchResult> path
 
     QSettings setting;
     qsizetype maxPreviewImageMemUsage = setting.value("maxpreviewimagesmemory", 1024 * 1024 * 1024).toLongLong();
-
     return QtConcurrent::mapped(previews, Renderer(scaleX, scaleY, maxPreviewImageMemUsage));
 }
 
