@@ -153,6 +153,8 @@ void MainWindow::lineEditReturnPressed()
     }
     //TODO: validate q;
     ui->lblSearchResults->setText("Searching...");
+    searchWatcher.cancel();
+    searchWatcher.waitForFinished();
     QFuture<QVector<SearchResult>> searchFuture = QtConcurrent::run([&, q]() {
         SqliteSearch searcher(db);
         return searcher.search(q);
