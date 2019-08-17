@@ -179,6 +179,7 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
        item->setText(0, fileName);
        item->setText(1, result.fileData.absPath);
        item->setText(2, dt.toString(Qt::ISODate));
+       item->setText(3, this->locale().formattedDataSize(result.fileData.size));
        if(result.fileData.absPath.endsWith(".pdf"))
        {
            this->pdfSearchResults.append(result);
