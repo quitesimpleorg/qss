@@ -6,6 +6,7 @@
 #include "pagedata.h"
 #include "filedata.h"
 #include "../shared/sqlitesearch.h"
+#include "../shared/token.h"
 enum SaveFileResult
 {
     OK,
@@ -25,7 +26,7 @@ public:
     bool deleteFile(QString path);
     bool fileExistsInDatabase(QString path);
     bool fileExistsInDatabase(QString path, qint64 mtime);
-    QVector<SearchResult> search(QString searchQuery);
+    QVector<SearchResult> search(const QSSQuery &query);
 
 };
 

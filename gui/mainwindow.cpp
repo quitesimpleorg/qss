@@ -16,6 +16,7 @@
 #include "clicklabel.h"
 #include "../shared/sqlitesearch.h"
 #include "../shared/qssgeneralexception.h"
+#include "../shared/qssquery.h"
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -146,7 +147,7 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
 void MainWindow::lineEditReturnPressed()
 {
     QString q = ui->txtSearch->text();
-    if(!SqliteSearch::checkParanthesis(q))
+    if(!QSSQuery::checkParanthesis(q))
     {
         ui->lblSearchResults->setText("Invalid paranthesis");
         return;
@@ -157,7 +158,7 @@ void MainWindow::lineEditReturnPressed()
     searchWatcher.waitForFinished();
     QFuture<QVector<SearchResult>> searchFuture = QtConcurrent::run([&, q]() {
         SqliteSearch searcher(db);
-        return searcher.search(q);
+        return searcher.search(QSSQuery::build(q));
     });
     searchWatcher.setFuture(searchFuture);
 

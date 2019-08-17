@@ -12,221 +12,134 @@ SqliteSearch::SqliteSearch(QSqlDatabase &db)
     this->db = &db;
 }
 
-QVector<SqliteSearch::Token> SqliteSearch::tokenize(QString expression)
+QString SqliteSearch::fieldToColumn(QueryField field)
 {
-    if(!checkParanthesis(expression))
-    {
-        throw QSSGeneralException("Invalid paranthesis");
-    }
-    //TODO: merge lonewords
-    QVector<SqliteSearch::Token> result;
-    QRegularExpression rx("((?<filtername>(\\.|\\w)+):(?<args>\\((?<innerargs>[^\\)]+)\\)|([\\w,])+)|(?<boolean>AND|OR|!)|(?<bracket>\\(|\\))|(?<loneword>\\w+))");
-    QRegularExpressionMatchIterator i = rx.globalMatch(expression);
-    auto isSort = [](QString &key) { return key == "sort"; };
-    auto isBool = [](QString &key) { return key == "AND" || key == "OR" || key == "!"; };
-    while(i.hasNext())
-    {
-        QRegularExpressionMatch m = i.next();
-        QString boolean = m.captured("boolean");
-        QString filtername = m.captured("filtername");
-        QString bracket = m.captured("bracket");
-        QString loneword = m.captured("loneword");
-
-        if(boolean != "")
-        {
-            result.append(Token(boolean));
-        }
-
-        if(!result.empty())
-        {
-            QString &lastKey = result.last().key;
-            if(!isBool(lastKey) && !isSort(lastKey) && !isSort(filtername))
-            {
-                result.append(Token("AND"));
-            }
-        }
-
-        if(bracket != "")
-        {
-           if(bracket == "(")
-           {
-               result.append(Token("AND"));
-           }
-          result.append(Token(bracket));
-        }
-
-
-        if(loneword != "")
-        {
-            result.append(Token("path.contains", loneword));
-        }
-
-        if(filtername != "")
-        {
-            QString value = m.captured("innerargs");
-            if(value == "")
-            {
-                value = m.captured("args");
-            }
-            result.append(Token(filtername, value));
-        }
-
-    }
-    return result;
-}
-
-
-QString SqliteSearch::fieldToColumn(QString field)
-{
-    if(field == "mtime" || field == "file.mtime")
+    if(field == FILE_MTIME)
     {
         return "file.mtime";
     }
-    else if(field == "page" || field == "content.page")
-    {
-        return "content.page";
-    }
-    else if(field == "path" || field == "file.path")
+    else if(field == FILE_PATH)
     {
         return "file.path";
     }
-    else if(field == "size" || field == "file.size")
+    else if(field == FILE_SIZE)
     {
         return "file.size";
+    }
+    else if(field == CONTENT_TEXT_PAGE)
+    {
+        return "content.page";
+    }
+    else if(field == CONTENT_TEXT)
+    {
+        return "content.text";
     }
     return "";
 }
 
 
-QString SqliteSearch::createSortSql(const SqliteSearch::Token &token)
+QString SqliteSearch::createSortSql(const QVector<SortCondition> sortConditions)
 {
-    //sort:(mtime desc, page asc)
-    if(token.key == "sort")
-    {
         QString sortsql;
-        QStringList splitted_inner = token.value.split(",");
-        for(int i = 0; i < splitted_inner.length(); i++)
+        for(const SortCondition &sc : sortConditions)
         {
-            QStringList splitted = splitted_inner[i].split(" ");
-            if(splitted.length() < 1 || splitted.length() > 2)
-            {
-                throw QSSGeneralException("sort specifier must have format [field] (asc|desc)");
-            }
-
-            QString field = splitted[0];
-            field = fieldToColumn(field);
+            QString order;
+            QString field = fieldToColumn(sc.field);
             if(field == "")
             {
                 throw QSSGeneralException("Unknown sort field supplied");
             }
-
-            QString order;
-            if(splitted.length() == 2)
+            if(sc.order == DESC)
             {
-                order = splitted[1];
-                if(order.compare("asc", Qt::CaseInsensitive) == 0)
-                {
-                    order = "ASC";
-                }
-                else if(order.compare("desc", Qt::CaseInsensitive) == 0)
-                {
-                    order = "DESC";
-                }
-                else
-                {
-                    throw QSSGeneralException("Unknown order specifier: " + order);
-                }
-
+                order = "DESC";
             }
             else
             {
                 order = "ASC";
             }
-
-            sortsql += field + " " + order;
-            if(splitted_inner.length() - i > 1)
-            {
-                sortsql += ", ";
-            }
+            sortsql += field + " " + order + ", ";
         }
-        return " ORDER BY " + sortsql;
-
-    }
-    return "";
+        sortsql.chop(2);
+        if(!sortsql.isEmpty())
+        {
+            return " ORDER BY " + sortsql;
+        }
+        return "";
 }
 
-QPair<QString, QVector<QString>> SqliteSearch::createSql(const SqliteSearch::Token &token)
+QPair<QString, QVector<QString>> createNonArgPair(QString key)
+{
+    return { " " + key + " ", QVector<QString>() };
+}
+
+QPair<QString, QVector<QString>> SqliteSearch::createSql(const Token &token)
 {
     QPair<QString, QVector<QString>> result;
-
-    QString key = token.key;
     QString value = token.value;
     value = value.replace("'", "\\'");
-    if(key == "AND" || key == "OR" || key == "(" || key == ")")
+
+    if(token.type == BOOL_AND)
     {
-        return { " " + key + " ", QVector<QString>() };
+        return createNonArgPair("AND");
     }
-    if(key == "!")
+    if(token.type == BOOL_OR)
     {
-        return { " NOT ", QVector<QString>() };
+        return createNonArgPair("OR");
     }
-    if(key == "path.starts")
+    if(token.type == NEGATION)
+    {
+        return createNonArgPair("NOT");
+    }
+    if(token.type == BRACKET_OPEN)
+    {
+        return createNonArgPair("(");
+    }
+    if(token.type == BRACKET_CLOSE)
+    {
+        return createNonArgPair(")");
+    }
+    if(token.type == FILTER_PATH_STARTS)
     {
         return { " file.path LIKE ? || '%' ", { value } };
     }
-    if(key == "path.ends")
+    if(token.type == FILTER_PATH_ENDS)
     {
         return { " file.path LIKE '%' || ? ", { value } };
     }
-    if(key == "path.contains" || key == "inpath")
+    if(token.type == FILTER_PATH_CONTAINS)
     {
         return { " file.path LIKE '%' || ? || '%' ", { value } } ;
     }
-    if(key == "page")
+    if(token.type == FILTER_CONTENT_PAGE)
     {
         return { " content.page = ?", { value } };
     }
-    if(key == "contains" || key == "c")
+    if(token.type == FILTER_CONTENT_CONTAINS)
     {
         return { " content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH ?) " , { value } };
     }
-    throw QSSGeneralException("Unknown token: " + key);
+    throw QSSGeneralException("Unknown token passed (should not happen)");
 }
 
-QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
+QSqlQuery SqliteSearch::makeSqlQuery(const QSSQuery &query)
 {
     QString whereSql;
-    QString limitSql;
-    QString sortSql;
     QVector<QString> bindValues;
-    bool isContentSearch = false;
-    for(const Token &c : tokens)
-    {
-        if(c.key == "sort")
-        {
-            if(sortSql != "")
-            {
-                throw QSSGeneralException("Invalid input: Two seperate sort statements are invalid");
-            }
-            sortSql = createSortSql(c);
-        }
-        else
-        {
-            if(c.key == "c" || c.key == "contains")
-            {
-                isContentSearch = true;
-            }
-            auto sql = createSql(c);
-            whereSql += sql.first;
-            bindValues.append(sql.second);
-        }
-    }
-
-    QString prepSql;
-    if(whereSql.isEmpty())
+    bool isContentSearch = query.getTokensMask() & FILTER_CONTENT == FILTER_CONTENT;
+    if(query.getTokens().isEmpty())
     {
         throw QSSGeneralException("Nothing to search for supplied");
     }
+
+    for(const Token &token : query.getTokens())
+    {
+           auto sql = createSql(token);
+           whereSql += sql.first;
+           bindValues.append(sql.second);
+    }
+
+    QString prepSql;
+    QString sortSql = createSortSql(query.getSortConditions());
     if(isContentSearch)
     {
         if(sortSql.isEmpty())
@@ -241,17 +154,11 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
         {
             sortSql =  "ORDER BY file.mtime DESC";
         }
-        if(sortSql.contains("content."))
-        {
-            throw QSSGeneralException("Cannot sort for content fields when not doing a content search");
-        }
-
         prepSql = "SELECT file.path AS path, '0' as pages,  file.mtime AS mtime, file.size AS size, file.filetype AS filetype FROM file WHERE  1=1 AND " + whereSql + " " + sortSql;
     }
 
     QSqlQuery dbquery(*db);
     dbquery.prepare(prepSql);
-
     for(const QString &value : bindValues)
     {
         if(value != "")
@@ -264,10 +171,10 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QVector<SqliteSearch::Token> &tokens)
 
 
 
-QVector<SearchResult> SqliteSearch::search(const QString &query)
+QVector<SearchResult> SqliteSearch::search(const QSSQuery &query)
 {
     QVector<SearchResult> results;
-    QSqlQuery dbQuery = makeSqlQuery(tokenize(query));
+    QSqlQuery dbQuery = makeSqlQuery(query);
     bool success = dbQuery.exec();
     if(!success)
     {
@@ -296,36 +203,4 @@ QVector<SearchResult> SqliteSearch::search(const QString &query)
         results.append(result);
     }
     return results;
-}
-
-bool SqliteSearch::checkParanthesis(QString expression)
-{
-    QStack<QChar> open;
-    QStack<QChar> close;
-
-    for(QChar &c : expression)
-    {
-        if(c == '(')
-        {
-            open.push(c);
-        }
-        if(c == ')')
-        {
-            close.push(c);
-        }
-    }
-    if(open.size() != close.size())
-    {
-        return false;
-    }
-    while(!open.empty() && !close.empty())
-    {
-        QChar o = open.pop();
-        QChar c = close.pop();
-        if(o != '(' && c != ')' )
-        {
-            return false;
-        }
-    }
-    return true;
 }

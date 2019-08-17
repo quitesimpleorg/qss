@@ -3,7 +3,6 @@
 #include "databasefactory.h"
 #include "logger.h"
 
-
 int CommandSearch::handle(QStringList arguments)
 {
     QCommandLineParser parser;
@@ -25,8 +24,7 @@ int CommandSearch::handle(QStringList arguments)
 
     QStringList files = parser.positionalArguments();
     QString queryStrings = files.join(' ');
-
-    auto results = dbService->search(queryStrings);
+    auto results = dbService->search(QSSQuery::build(queryStrings));
 
     for(SearchResult &result : results)
     {

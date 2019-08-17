@@ -1,6 +1,6 @@
 QT -= gui
 QT += sql concurrent
-CONFIG += c++11 console
+CONFIG += c++17 console
 CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
@@ -32,7 +32,8 @@ SOURCES += \
     databasefactory.cpp \
     sqlitedbservice.cpp \
     logger.cpp \
-    commandsearch.cpp
+    commandsearch.cpp \
+    commandlist.cpp
 
 HEADERS += \
     encodingdetector.h \
@@ -53,7 +54,8 @@ HEADERS += \
     databasefactory.h \
     sqlitedbservice.h \
     logger.h \
-    commandsearch.h
+    commandsearch.h \
+    commandlist.h
 INCLUDEPATH += /usr/include/poppler/qt5/ /usr/include/quazip5
 
 

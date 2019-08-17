@@ -3,38 +3,21 @@
 #include <QSqlDatabase>
 #include <QPair>
 #include "searchresult.h"
-
+#include "token.h"
+#include "../shared/qssquery.h"
 class SqliteSearch
 {
-    class Token
-    {
-        public:
-            QString key;
-            QString value;
-
-            Token(QString key="", QString value="")
-            {
-                this->key = key;
-                this->value = value;
-            }
-
-
-    };
 
 public:
-
-
     SqliteSearch(QSqlDatabase &db);
-    QVector<SearchResult> search(const QString &query);
-    static bool checkParanthesis(QString expression);
+    QVector<SearchResult> search(const QSSQuery &query);
 
 private:
     QSqlDatabase *db;
-    QVector<Token> tokenize(QString expression);
-    QSqlQuery makeSqlQuery(const QVector<Token> &tokens);
-    QString fieldToColumn(QString col);
+    QSqlQuery makeSqlQuery(const QSSQuery &query);
+    QString fieldToColumn(QueryField field);
     QPair<QString, QVector<QString> > createSql(const Token &token);
-    QString createSortSql(const SqliteSearch::Token &token);
+    QString createSortSql(const QVector<SortCondition> sortConditions);
 };
 
 #endif // SQLITESEARCH_H

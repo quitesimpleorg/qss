@@ -20,11 +20,11 @@ bool SqliteDbService::fileExistsInDatabase(QString path, qint64 mtime)
     return query.value(0).toBool();
 }
 
-QVector<SearchResult> SqliteDbService::search(QString searchQuery)
+QVector<SearchResult> SqliteDbService::search(const QSSQuery &query)
 {
     auto connection = dbFactory->forCurrentThread();
     SqliteSearch searcher(connection);
-    return searcher.search(searchQuery);
+    return searcher.search(query);
 }
 
 bool SqliteDbService::fileExistsInDatabase(QString path)
