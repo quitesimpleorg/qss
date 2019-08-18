@@ -1,13 +1,13 @@
 PdfPreview: Use some kind of paging instead of memory limit
 Consider injecting Logger (default stdout/stderr) to classes instead of using Logger::info()/Logger::error()::
 sync/share GUI and CLI data-structures. Better to share codebase in general
-- cli: update command, delete command, tagging
+- cli: tagging
 - cli: command line parser: wrong position of [options] 
 - ability to set the WHERE condition (allow editing the SQL query)
-- Scale factors
 - Basic OCR in images (screenshots)
 - Index .ebup
 - Preview for: .txt, source code files, .ebup, images
+- index: DVD menus, media metadata in audio/files etc?
 - Stats: Number of results found
 - PdfPreview: Files per file, or directory (so basically filter the 
 results)
@@ -22,12 +22,7 @@ Menu:
 -Delete from fs
 -Reindex
 Filter:
-contains: (default, implicit)
 type:d 
 type:file
-endswith:
-startswith:
 mtime:
 tag:
-page:
-SearchWorker::setFilters()
