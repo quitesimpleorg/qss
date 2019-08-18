@@ -9,6 +9,7 @@
 #include <QFutureWatcher>
 #include <QSqlDatabase>
 #include "pdfworker.h"
+#include "../shared/qssquery.h"
 namespace Ui {
 class MainWindow;
 }
@@ -39,6 +40,7 @@ private:
     unsigned int processedPdfPreviews;
     void handleSearchResults(const QVector<SearchResult> &results);
     void handleSearchError(QString error);
+    QSSQuery currentQuery;
 private slots:
     void lineEditReturnPressed();
     void treeSearchItemActivated(QTreeWidgetItem *item, int i);
