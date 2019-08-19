@@ -212,14 +212,22 @@ void MainWindow::makePdfPreview()
    scaleText.chop(1);
 
    QVector<QString> wordsToHighlight;
+   QRegularExpression extractor(R"#("([^"]*)"|(\w+))#");
    for(const Token &token : this->currentQuery.getTokens())
    {
        if(token.type == FILTER_CONTENT_CONTAINS)
        {
-           auto splitted = token.value.split(" ");
-           for(QString &str : splitted)
+           QRegularExpressionMatchIterator i = extractor.globalMatch(token.value);
+           while(i.hasNext())
            {
-               wordsToHighlight.append(str);
+               QRegularExpressionMatch m = i.next();
+               QString value = m.captured(1);
+               if(value.isEmpty())
+               {
+                   value = m.captured(2);
+               }
+               wordsToHighlight.append(value);
+
            }
        }
    }

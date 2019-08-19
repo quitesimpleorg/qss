@@ -88,7 +88,7 @@ struct Renderer
             QImage img = pdfPage->renderToImage(scaleX, scaleY);
             for(QString & word : wordsToHighlight)
             {
-                QList<QRectF> rects = pdfPage->search(word);
+                QList<QRectF> rects = pdfPage->search(word, Poppler::Page::CaseInsensitive);
                 for(QRectF &rect : rects)
                 {
                     QPainter painter(&img);
