@@ -21,7 +21,12 @@ const QVector<SortCondition> &QSSQuery::getSortConditions() const
 
 QueryType QSSQuery::getQueryType()
 {
-   return static_cast<QueryType>(tokensMask & COMBINED);
+    return static_cast<QueryType>(tokensMask & COMBINED);
+}
+
+void QSSQuery::addSortCondition(SortCondition sc)
+{
+    this->sortConditions.append(sc);
 }
 
 bool QSSQuery::checkParanthesis(QString expression)

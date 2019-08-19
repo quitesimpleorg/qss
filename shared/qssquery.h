@@ -48,6 +48,7 @@ public:
     const QVector<SortCondition> & getSortConditions() const;
     QueryType getQueryType();
     int getTokensMask() const { return tokensMask; }
+    void addSortCondition(SortCondition sc);
     static bool checkParanthesis(QString query);
     static QSSQuery build(QString query);
 

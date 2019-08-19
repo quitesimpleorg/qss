@@ -7,24 +7,26 @@ int CommandSearch::handle(QStringList arguments)
 {
     QCommandLineParser parser;
     parser.addOptions({
-                          { { "r", "reverse" }, "Print most-recent changed files first" },
-                          { "pattern", "Only delete files from index matching the pattern, e. g. */.git/*. Only applies to --deleted or standalone.", "pattern" },
+                          { { "r", "reverse" }, "Print most-recent changed files first. This is short for adding \"sort:(mtime asc)\" to the query." },
                       });
 
     parser.addHelpOption();
-    parser.addPositionalArgument("delete", "Delete paths from the index", "delete [paths...]");
-
     parser.process(arguments);
-    bool reverse = parser.isSet("reverse");
-    if(reverse)
-    {
-        throw QSSGeneralException("Reverse option to be implemented");
-    }
 
 
     QStringList files = parser.positionalArguments();
     QString queryStrings = files.join(' ');
-    auto results = dbService->search(QSSQuery::build(queryStrings));
+    QSSQuery query = QSSQuery::build(queryStrings);
+    bool reverse = parser.isSet("reverse");
+    if(reverse)
+    {
+        SortCondition sc;
+        sc.field = FILE_MTIME;
+        sc.order = ASC;
+        query.addSortCondition(sc);
+    }
+
+    auto results = dbService->search(query);
 
     for(SearchResult &result : results)
     {
