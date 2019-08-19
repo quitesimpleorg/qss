@@ -125,13 +125,14 @@ void MainWindow::pdfPreviewReceived(PdfPreview preview)
             QString command = settings.value("pdfviewer").toString();
             if(command != "" && command.contains("%p") && command.contains("%f"))
             {
-                command = command.replace("%f", preview.documentPath);
-                command = command.replace("%p", QString::number(preview.page));
                 QStringList splitted = command.split(" ");
                 if(splitted.size() > 1)
                 {
                     QString cmd = splitted[0];
                     QStringList args = splitted.mid(1);
+                    args.replaceInStrings("%f", preview.documentPath);
+                    args.replaceInStrings("%p", QString::number(preview.page));
+
                     QProcess::startDetached(cmd, args);
                 }
             }
