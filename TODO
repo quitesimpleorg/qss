@@ -1,3 +1,8 @@
+general database classes instead of sqlite specific code 
+database: set a number of paths to default index. will require an indexer code though
+sandboxing!
+allow from GUI to ues commandlin, e. g. "/add ..." would be the same as "qss add ..." in termial
+
 PdfPreview: Use some kind of paging instead of memory limit
 Consider injecting Logger (default stdout/stderr) to classes instead of using Logger::info()/Logger::error()::
 sync/share GUI and CLI data-structures. Better to share codebase in general
