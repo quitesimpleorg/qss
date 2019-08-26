@@ -148,6 +148,26 @@
             </property>
            </spacer>
           </item>
+          <item>
+           <widget class="QLabel" name="lblPdfPreviewPage">
+            <property name="text">
+             <string>Page:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinPdfPreviewPage">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::PlusMinus</enum>
+            </property>
+            <property name="accelerated">
+             <bool>false</bool>
+            </property>
+            <property name="showGroupSeparator" stdset="0">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
