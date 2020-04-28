@@ -10,14 +10,16 @@ at the pages side by side in an instant.
 
 Build
 -----
-TO BE WRITTEN
+### Ubuntu 20.04
+```
+sudo apt install build-essential qt5-default libpoppler-qt5-dev libuchardet-dev libquazip5-dev
+qmake
+make
+```
+
 
 Setup
 -----
 sqlite3 qss.db < create.sql
 
 TO BE WRITTEN
-
-
-
-
