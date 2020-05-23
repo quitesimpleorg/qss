@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QMap>
 #include <QDebug>
+#include <QSettings>
 #include <functional>
 #include <exception>
 #include "encodingdetector.h"
@@ -23,64 +24,68 @@
 #include "commandsearch.h"
 #include "databasefactory.h"
 #include "logger.h"
+#include "../shared/common.h"
+
 void printUsage(QString argv0)
 {
-    qInfo() << "Usage: " << argv0 << "command";
+	qInfo() << "Usage: " << argv0 << "command";
 }
 
 Command *commandFromName(QString name, SqliteDbService &dbService)
 {
-    if(name == "add")
-    {
-        return new CommandAdd(dbService);
-    }
-    if(name == "delete")
-    {
-        return new CommandDelete(dbService);
-    }
-    if(name == "update")
-    {
-        return new CommandUpdate(dbService);
-    }
-    if(name == "search")
-    {
-        return new CommandSearch(dbService);
-    }
+	if(name == "add")
+	{
+		return new CommandAdd(dbService);
+	}
+	if(name == "delete")
+	{
+		return new CommandDelete(dbService);
+	}
+	if(name == "update")
+	{
+		return new CommandUpdate(dbService);
+	}
+	if(name == "search")
+	{
+		return new CommandSearch(dbService);
+	}
 
-    return nullptr;
+	return nullptr;
 }
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication app(argc, argv);
+	Common::setupAppInfo();
 
-    QStringList args = app.arguments();
-    QString argv0 = args.takeFirst();
-    if(args.length() < 1)
-    {
-        printUsage(argv0);
-        exit(1);
-    }
+	QCoreApplication app(argc, argv);
+	QStringList args = app.arguments();
+	QString argv0 = args.takeFirst();
+	if(args.length() < 1)
+	{
+		printUsage(argv0);
+		exit(1);
+	}
 
-    QString commandName = args.first();
-    QString connectionString = QProcessEnvironment::systemEnvironment().value("QSS_PATH");
-    DatabaseFactory dbFactory(connectionString);
-    SqliteDbService dbService(dbFactory);
-    Command *cmd = commandFromName(commandName, dbService);
-    if(cmd != nullptr)
-    {
-        try
-        {
-            return cmd->handle(args);
-        }
-        catch(const QSSGeneralException &e)
-        {
-            Logger::error() << "Exception caught, message: " << e.message << endl;
-        }
-    }
-    else
-    {
-        Logger::error() << "Unknown command " << commandName << endl;
-    }
-    return 1;
+	QString commandName = args.first();
+	QSettings settings;
+	QString connectionString = settings.value("dbpath").toString();
+	DatabaseFactory dbFactory(connectionString);
+	SqliteDbService dbService(dbFactory);
+	Command *cmd = commandFromName(commandName, dbService);
+	if(cmd != nullptr)
+	{
+		try
+		{
+			return cmd->handle(args);
+		}
+		catch(const QSSGeneralException &e)
+		{
+			Logger::error() << "Exception caught, message: " << e.message << endl;
+		}
+	}
+	else
+	{
+		Logger::error() << "Unknown command " << commandName << endl;
+	}
+	return 1;
 }

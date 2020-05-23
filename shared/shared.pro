@@ -26,14 +26,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += sqlitesearch.cpp \
     qssgeneralexception.cpp \
-    qssquery.cpp
+    qssquery.cpp \
+    common.cpp
 
 HEADERS += sqlitesearch.h \
     filedata.h \
     searchresult.h \
     qssgeneralexception.h \
     token.h \
-    qssquery.h
+    qssquery.h \
+    common.h
 unix {
     target.path = /usr/lib
     INSTALLS += target
