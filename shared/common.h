@@ -5,5 +5,6 @@
 namespace Common
 {
 	void setupAppInfo();
+	QString databasePath();
 }
 #endif

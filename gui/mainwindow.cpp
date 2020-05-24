@@ -16,6 +16,8 @@
 #include "clicklabel.h"
 #include "../shared/sqlitesearch.h"
 #include "../shared/qssgeneralexception.h"
+#include "../shared/common.h"
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -24,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	QSettings settings;
 
 	db = QSqlDatabase::addDatabase("QSQLITE");
-	db.setDatabaseName(settings.value("dbpath").toString());
+	db.setDatabaseName(Common::databasePath());
 	if(!db.open())
 	{
 		qDebug() << "failed to open database";

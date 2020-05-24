@@ -28,7 +28,7 @@
 
 void printUsage(QString argv0)
 {
-	qInfo() << "Usage: " << argv0 << "command";
+	qInfo() << "Usage:" << argv0 << "command";
 }
 
 Command *commandFromName(QString name, SqliteDbService &dbService)
@@ -66,11 +66,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	QString commandName = args.first();
-	QSettings settings;
-	QString connectionString = settings.value("dbpath").toString();
+	QString connectionString = Common::databasePath();
 	DatabaseFactory dbFactory(connectionString);
 	SqliteDbService dbService(dbFactory);
+	QString commandName = args.first();
 	Command *cmd = commandFromName(commandName, dbService);
 	if(cmd != nullptr)
 	{
