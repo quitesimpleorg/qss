@@ -121,10 +121,7 @@ int CommandDelete::handle(QStringList arguments)
         }
     }
 
-
-
     return 0;
-
 }
 
 

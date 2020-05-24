@@ -33,4 +33,5 @@ int CommandSearch::handle(QStringList arguments)
         Logger::info() << result.fileData.absPath << endl;
     }
 
+	return 0;
 }
