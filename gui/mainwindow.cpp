@@ -49,14 +49,15 @@ void MainWindow::connectSignals()
 	connect(&searchWatcher, &QFutureWatcher<SearchResult>::finished, this, [&]{
 		try
 		{
+			this->ui->txtSearch->setEnabled(true);
 			auto results = searchWatcher.future().result();
 			handleSearchResults(results);
+
 		}
 		catch(QSSGeneralException &e)
 		{
 			handleSearchError(e.message);
 		}
-
 	});
 
 	connect(&pdfWorkerWatcher, &QFutureWatcher<PdfPreview>::resultReadyAt, this, [&](int index) {
@@ -165,8 +166,7 @@ void MainWindow::lineEditReturnPressed()
 	}
 	//TODO: validate q;
 	ui->lblSearchResults->setText("Searching...");
-	searchWatcher.cancel();
-	searchWatcher.waitForFinished();
+	this->ui->txtSearch->setEnabled(false);
 	QFuture<QVector<SearchResult>> searchFuture = QtConcurrent::run([&, q]() {
 		SqliteSearch searcher(db);
 		this->currentQuery = QSSQuery::build(q);
