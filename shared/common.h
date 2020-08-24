@@ -6,5 +6,7 @@ namespace Common
 {
 	void setupAppInfo();
 	QString databasePath();
+	bool initSqliteDatabase(QString path);
+	void ensureConfigured();
 }
 #endif

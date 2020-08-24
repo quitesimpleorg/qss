@@ -56,7 +56,6 @@ Command *commandFromName(QString name, SqliteDbService &dbService)
 int main(int argc, char *argv[])
 {
 	Common::setupAppInfo();
-
 	QCoreApplication app(argc, argv);
 	QStringList args = app.arguments();
 	QString argv0 = args.takeFirst();
@@ -64,6 +63,16 @@ int main(int argc, char *argv[])
 	{
 		printUsage(argv0);
 		exit(1);
+	}
+
+	try
+	{
+		Common::ensureConfigured();
+	}
+	catch(QSSGeneralException &e)
+	{
+		Logger::error() << "Error: " << e.message;
+		return 1;
 	}
 
 	QString connectionString = Common::databasePath();
