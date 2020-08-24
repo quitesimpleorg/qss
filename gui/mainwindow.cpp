@@ -180,7 +180,7 @@ void MainWindow::handleSearchResults(const QVector<SearchResult> &results)
 {
 	this->pdfSearchResults.clear();
 	ui->treeResultsList->clear();
-	ui->lblSearchResults->setText("Results: " + QString::number(results.size()));
+	ui->lblSearchResults->setText("Results: " + QString::number(results.size()) + " files");
 	for(const SearchResult &result : results)
 	{
 		QFileInfo pathInfo(result.fileData.absPath);
