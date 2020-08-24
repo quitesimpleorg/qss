@@ -10,6 +10,11 @@ at the pages side by side in an instant.
 
 The name of the project will probably be changed.
 
+Screenshots
+-----------
+Coming soon™
+
+
 Goals
 =====
  * **Find & Preview**. Instead of merely telling you where your search phrase has been found, it actually shows it too. 
@@ -25,6 +30,10 @@ sudo apt install build-essential qt5-default libpoppler-qt5-dev libuchardet-dev 
 qmake
 make
 ```
+
+Documentation
+-------------
+Coming soon™
 
 Packages
 -----
