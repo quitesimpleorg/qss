@@ -5,12 +5,12 @@
 class CommandDelete : public Command
 {
 public:
-    using Command::Command;
+	using Command::Command;
 
-    int handle(QStringList arguments) override;
+	int handle(QStringList arguments) override;
 private:
-    int removeNonExistent(bool verbose, bool dryRun, QString pattern);
-    int removePaths(const QStringList &paths, bool verbose, bool dryRun);
+	int remove(QString pattern, bool onlyDeleted, bool verbose, bool dryRun);
+	int removePaths(const QStringList &paths, bool verbose, bool dryRun);
 };
 
 #endif // COMMANDDELETE_H
