@@ -34,16 +34,25 @@ bool QSSQuery::checkParanthesis(QString expression)
     QStack<QChar> open;
     QStack<QChar> close;
 
+	bool inQuotes = false;
+
     for(QChar &c : expression)
     {
-        if(c == '(')
-        {
-            open.push(c);
-        }
-        if(c == ')')
-        {
-            close.push(c);
-        }
+		if(!inQuotes)
+		{
+			if(c == '(')
+			{
+				open.push(c);
+			}
+			if(c == ')')
+			{
+				close.push(c);
+			}
+		}
+		if(c == '"')
+		{
+			inQuotes = ! inQuotes;
+		}
     }
     if(open.size() != close.size())
     {
