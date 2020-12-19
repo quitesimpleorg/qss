@@ -115,7 +115,8 @@ QPair<QString, QVector<QString>> SqliteSearch::createSql(const Token &token)
 	}
 	if(token.type == FILTER_CONTENT_CONTAINS)
 	{
-		return {" content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH ?) ",
+		return {" content.id IN (SELECT content_fts.ROWID FROM content_fts WHERE content_fts.content MATCH ? ORDER BY "
+				"rank) ",
 				{value}};
 	}
 	throw QSSGeneralException("Unknown token passed (should not happen)");
@@ -142,10 +143,6 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QSSQuery &query)
 	QString sortSql = createSortSql(query.getSortConditions());
 	if(isContentSearch)
 	{
-		if(sortSql.isEmpty())
-		{
-			sortSql = "ORDER BY file.mtime DESC, content.page ASC";
-		}
 		prepSql =
 			"SELECT file.path AS path, group_concat(content.page) AS pages, file.mtime AS mtime, file.size AS size, "
 			"file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " +
