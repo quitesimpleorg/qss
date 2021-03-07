@@ -281,6 +281,11 @@ QSSQuery QSSQuery::build(QString expression)
                 {
                     throw QSSGeneralException("Two sort statements are illegal");
                 }
+				//TODO: hack, since we are not a "filter", we must remove a preceeding (implicit) boolean
+				if(result.tokens.last().type & BOOL == BOOL)
+				{
+					result.tokens.pop_back();
+				}
                 result.sortConditions = createSortConditions(value);
                 continue;
             }
