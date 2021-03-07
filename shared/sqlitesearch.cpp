@@ -125,6 +125,7 @@ QPair<QString, QVector<QString>> SqliteSearch::createSql(const Token &token)
 QSqlQuery SqliteSearch::makeSqlQuery(const QSSQuery &query)
 {
 	QString whereSql;
+	QString joinSql;
 	QVector<QString> bindValues;
 	bool isContentSearch = query.getTokensMask() & FILTER_CONTENT == FILTER_CONTENT;
 	if(query.getTokens().isEmpty())
@@ -134,19 +135,32 @@ QSqlQuery SqliteSearch::makeSqlQuery(const QSSQuery &query)
 
 	for(const Token &token : query.getTokens())
 	{
-		auto sql = createSql(token);
-		whereSql += sql.first;
-		bindValues.append(sql.second);
+		if(token.type == FILTER_CONTENT_CONTAINS)
+		{
+			joinSql += " INNER JOIN content_fts ON content.id = content_fts.ROWID ";
+			whereSql += " content_fts.content MATCH ? ";
+			bindValues.append(token.value);
+		}
+		else
+		{
+			auto sql = createSql(token);
+			whereSql += sql.first;
+			bindValues.append(sql.second);
+		}
 	}
 
 	QString prepSql;
 	QString sortSql = createSortSql(query.getSortConditions());
 	if(isContentSearch)
 	{
+		if(sortSql.isEmpty())
+		{
+			sortSql = "ORDER BY rank";
+		}
 		prepSql =
 			"SELECT file.path AS path, group_concat(content.page) AS pages, file.mtime AS mtime, file.size AS size, "
-			"file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid WHERE 1=1 AND " +
-			whereSql + " GROUP BY file.path  " + sortSql;
+			"file.filetype AS filetype FROM file INNER JOIN content ON file.id = content.fileid " + joinSql+
+			" WHERE 1=1 AND " +whereSql + " GROUP BY file.path  " + sortSql;
 	}
 	else
 	{
