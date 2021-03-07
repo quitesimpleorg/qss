@@ -47,6 +47,7 @@ struct Renderer
 		result->setRenderHint(Poppler::Document::TextAntialiasing);
 		QMutexLocker locker(&cacheMutex);
 		documentcache.insert(path, result);
+		locker.unlock();
 		return result;
     }
 
