@@ -1,17 +1,18 @@
 #ifndef CLICKLABEL_H
 #define CLICKLABEL_H
 #include <QLabel>
+#include <QMenu>
 
 class ClickLabel : public QLabel
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    using QLabel::QLabel;
+	using QLabel::QLabel;
 signals:
-    void leftClick();
+	void leftClick();
+	void rightClick();
 protected:
-        void mousePressEvent(QMouseEvent *event);
-
+	void mousePressEvent(QMouseEvent *event);
 };
 
 #endif // CLICKLABEL_H
